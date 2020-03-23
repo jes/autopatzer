@@ -64,7 +64,7 @@ void homeSteppers() {
   stepper[0].setCurrentPosition(0);
   stepper[1].setCurrentPosition(0);
 
-  // crash homing: just drive the maximum distance until we know we've crashed into the end
+  // "crash homing": just drive the maximum distance until we know we've crashed into the end
   targetSteppers(home1+extrahome, home2+extrahome, 0);
   runSteppers();
 

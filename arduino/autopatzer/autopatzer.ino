@@ -5,17 +5,34 @@
 
 #define BUFSZ 128
 
+const int pieceSettleMs = 50; // don't report a square changed until it has settled for N ms
+const int maxMagnetIdleMs = 20000; // don't let magnet stay on while idle for more than N ms
+
 extern bool squareOccupied[64];
+extern unsigned long lastChange[64];
+bool realSquareOccupied[64];
 
 int magnetState = 0;
 int squareSize = 480; // steps per square
+unsigned long magnetActivated;
+unsigned long lastMovement;
 
 void setup() {
   Serial.begin(9600); // XXX: faster?
+
+  // stepper motors
   initSteppers(3, 4, 5, 6, 7, 8);
   homeSteppers();
+
+  // hall sensors
   initHallSensors(0, 1, 2);
+  scanHallSensors();
+  for (int i = 0; i < 64; i++)
+    realSquareOccupied[i] = squareOccupied[i];
+
+  // electromagnet
   pinMode(9, OUTPUT);
+  
   Serial.println("autopatzer ready");
 }
 
@@ -33,6 +50,7 @@ int loops = 0;
 int ts = 0;
 
 void grabMagnet() {
+  magnetActivated = millis();
   magnetState = 1;
   digitalWrite(9, HIGH);
 }
@@ -42,8 +60,28 @@ void releaseMagnet() {
 }
 
 void loop() {
+  scanHallSensors();
+  for (int i = 0; i < 64; i++) {
+    if (millis() - lastChange[i] > pieceSettleMs && squareOccupied[i] != realSquareOccupied[i]) {
+      realSquareOccupied[i] = squareOccupied[i];
+      if (realSquareOccupied[i] ) {
+        Serial.print("piecedown "); Serial.println(square2Name(i));
+      } else {
+        Serial.print("pieceup "); Serial.println(square2Name(i));
+      }
+    }
+  }
+  
   updateSteppers();
   updateSerial();
+
+  if (!finishedSteppers())
+    lastMovement = millis();
+
+  if (magnetState && millis() - lastMovement > maxMagnetIdleMs && millis() - magnetActivated > maxMagnetIdleMs) {
+    Serial.println("error: magnet on while idle, forcibly releasing");
+    releaseMagnet();
+  }
 }
 
 void updateSerial() {
@@ -74,6 +112,7 @@ void serialCommand(char *buf) {
       "   grab           - switch electromagnet on\r\n"
       "   release        - switch electromagnet off\r\n"
       "   scan           - scan hall effect sensors\r\n"
+      "   home           - re-home the motors\r\n"
     );
       
   } else if (strcmp(params[0], "goto") == 0) {
@@ -97,7 +136,10 @@ void serialCommand(char *buf) {
     Serial.println("ok");
     
   } else if (strcmp(params[0], "wait") == 0) {
-    runSteppers();
+    if (!finishedSteppers()) {
+      runSteppers();
+      lastMovement = millis();
+    }
     Serial.println("ok");
     
   } else if (strcmp(params[0], "grab") == 0) {
@@ -109,14 +151,17 @@ void serialCommand(char *buf) {
     Serial.println("ok");
     
   } else if (strcmp(params[0], "scan") == 0) {
-    scanHallSensors();
     for (int i = 0; i < 64; i++) {
-      if (squareOccupied[i]) {
+      if (realSquareOccupied[i]) {
         Serial.print(square2Name(i));
         Serial.print(" ");
       }
     }
     Serial.println("");
+    Serial.println("ok");
+    
+  } else if (strcmp(params[0], "home") == 0) {
+    homeSteppers();
     Serial.println("ok");
     
   }

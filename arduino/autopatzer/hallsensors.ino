@@ -2,8 +2,11 @@
  *  
  * James Stanley 2020
  */
+ 
+const int analogThreshold = 770;
 
 bool squareOccupied[64];
+unsigned long lastChange[64];
 
 // map sensor locations to actual squares (0=a1, 7=h1, 8=a2, 56=a8, 63=h8)
 int squareMap[64] = {
@@ -35,8 +38,14 @@ void scanHallSensors() {
     digitalWrite(bit3pin, i&4);
     // XXX: do we need to wait between writing to the bit pins and reading from the analogue pins?
     for (int j = 0; j < 8; j++) {
+      updateSteppers(); // HACK: don't let scanHallSensors() block stepper motor operation
+      int sqr = squareMap[i*8+j];
       int val = analogRead(j);
-      squareOccupied[squareMap[i*8+j]] = val > 800;
+      bool occ = val > analogThreshold;
+      if (squareOccupied[sqr] != occ) {
+        squareOccupied[sqr] = occ;
+        lastChange[sqr] = millis();
+      }
     }
   }
 }
