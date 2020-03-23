@@ -105,7 +105,7 @@ void serialCommand(char *buf) {
 
   if (strcmp(params[0], "help") == 0) {
     Serial.print(
-      "commands:\r\n"
+      "autopatzer commands:\r\n"
       "   help           - show help\r\n"
       "   goto X Y       - move motors to (X,Y)\r\n"
       "   wait           - wait for motors to stop\r\n"
