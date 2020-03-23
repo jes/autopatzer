@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use lib 'lib';
+
+use Autopatzer;
+use IO::Select;
+
+my $myturn = 1;
+my $move;
+
+my $ap = Autopatzer->new(
+    device => '/dev/ttyACM0',
+    cb => sub {
+        my ($self) = @_;
+
+        print "CALLBACK\n";
+
+        return if $myturn;
+
+        $move = '';
+
+        my $m = $self->moveShown;
+        if ($m) {
+            print "$m - hit enter to accept\n";
+            $move = $m;
+        }
+    },
+);
+
+my $s = IO::Select->new();
+$s->add(\*STDIN);
+$s->add($ap->{fh});
+
+# TODO: verify board is in initial game configuration
+# TODO: detect end of game, illegal moves, etc.
+
+print "Input a move for white:\n";
+
+while (1) {
+    my @ready = $s->can_read();
+
+    for my $fh (@ready) {
+        if ($fh == $ap->{fh}) {
+            $ap->read();
+        } else {
+            my $line = <>;
+            chomp $line;
+            if ($move && !$myturn) {
+                $ap->moveWithoutMotors($move);
+                $move = '';
+                $myturn = 1;
+                print "Now input a move for white:\n";
+            } elsif ($myturn) {
+                $ap->moveWithMotors($line);
+                $myturn = 0;
+                print "Now move black on the board...\n";
+            }
+        }
+    }
+}
