@@ -43,12 +43,15 @@ sub read {
     my $s = IO::Select->new;
     $s->add($self->{fh});
 
+    print "can_read...\n";
     my @ready = IO::Select->new($self->{fh})->can_read($timeout);
     return 0 unless @ready;
 
     # TODO: will this block if less than a full line is available?
-    my $fh = $self->{fh};
-    $self->{buf} .= <$fh>;
+    print "read...\n";
+    sysread($self->{fh}, $self->{buf}, 1024, length($self->{buf}));
+
+    print "{{{ $self->{buf} }}}\n";
 
     while ($self->{buf} =~ s/^(.*?\n)//m) {
         my $line = $1;
@@ -56,6 +59,8 @@ sub read {
         print "[[$line]]\n";
 
         warn "error from board: $line\n" if $line =~ /error/;
+
+        delete $self->{look_for} if $self->{look_for} && $line =~ /$self->{look_for}/;
 
         if ($line =~ /^piece(up|down) (..)/) {
             my $up = $1 eq 'up' ? 1 : 0;
@@ -68,10 +73,43 @@ sub read {
             }
         }
 
+        if ($line =~ /^occupied: (.*)$/) {
+            my @squares = split / /, $1;
+            $self->{occupied} = +{ map { $_ => 1 } @squares };
+        }
+
         $self->{cb}->($self) if $self->{cb} && $self->{ready};
     }
 
     return 1;
+}
+
+sub blockUntil {
+    my ($self, $keyword) = @_;
+
+    $self->{ready} = 0;
+    $self->{look_for} = $keyword;
+    $self->read while $self->{look_for};
+    $self->{ready} = 1;
+    $self->{cb}->($self) if $self->{cb};
+}
+
+sub scan {
+    my ($self, $block) = @_;
+    my $fh = $self->{fh};
+
+    print $fh "scan\n";
+
+    $self->blockUntil("occupied") if $block;
+}
+
+sub boardIsReset {
+    my ($self) = @_;
+
+    $self->scan(1);
+
+    my $sqrs = join(' ', sort keys %{ $self->{occupied} });
+    return $sqrs eq 'a1 a2 a7 a8 b1 b2 b7 b8 c1 c2 c7 c8 d1 d2 d7 d8 e1 e2 e7 e8 f1 f2 f7 f8 g1 g2 g7 g8 h1 h2 h7 h8';
 }
 
 sub moveWithoutMotors {
@@ -81,7 +119,7 @@ sub moveWithoutMotors {
 }
 
 sub moveWithMotors {
-    my ($self, $move) = @_;
+    my ($self, $move, $block) = @_;
 
     my $m = $self->{game}->go_move($move);
 
@@ -91,7 +129,10 @@ sub moveWithMotors {
     my $toy = $m->{to_col}+1;
 
     my $fh = $self->{fh};
-    print $fh "goto $fromx $fromy\nwait\ngrab\ngoto $tox $toy\nwait\nrelease\n";
+    print $fh "goto $fromx $fromy\nwait\n";
+    $self->blockUntil("waited") if $block;
+    print $fh "grab\ngoto $tox $toy\nwait\nrelease\n";
+    $self->blockUntil("waited") if $block;
 }
 
 sub moveShown {

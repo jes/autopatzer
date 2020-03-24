@@ -16,8 +16,6 @@ my $ap = Autopatzer->new(
     cb => sub {
         my ($self) = @_;
 
-        print "CALLBACK\n";
-
         return if $myturn;
 
         $move = '';
@@ -34,12 +32,14 @@ my $s = IO::Select->new();
 $s->add(\*STDIN);
 $s->add($ap->{fh});
 
-# TODO: verify board is in initial game configuration
+die "reset the pieces: " . join(' ', sort keys %{ $ap->{occupied} }) . "\n" unless $ap->boardIsReset;
+
 # TODO: detect end of game, illegal moves, etc.
 
 print "Input a move for white:\n";
 
 while (1) {
+    print "outer can_read...\n";
     my @ready = $s->can_read();
 
     for my $fh (@ready) {
@@ -54,7 +54,7 @@ while (1) {
                 $myturn = 1;
                 print "Now input a move for white:\n";
             } elsif ($myturn) {
-                $ap->moveWithMotors($line);
+                $ap->moveWithMotors($line, 1);
                 $myturn = 0;
                 print "Now move black on the board...\n";
             }
