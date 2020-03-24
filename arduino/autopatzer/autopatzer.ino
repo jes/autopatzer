@@ -117,7 +117,7 @@ void serialCommand(char *buf) {
       
   } else if (strcmp(params[0], "goto") == 0) {
     if (!params[1] || !params[2]) {
-      Serial.println("usage: goto X Y");
+      Serial.println("error: usage: goto X Y");
       return;
     }
   
@@ -133,36 +133,32 @@ void serialCommand(char *buf) {
     }
 
     targetSteppers(x * squareSize, y * squareSize, magnetState);
-    Serial.println("ok");
     
   } else if (strcmp(params[0], "wait") == 0) {
     if (!finishedSteppers()) {
       runSteppers();
       lastMovement = millis();
     }
-    Serial.println("ok");
+    Serial.println("waited");
     
   } else if (strcmp(params[0], "grab") == 0) {
     grabMagnet();
-    Serial.println("ok");
     
   } else if (strcmp(params[0], "release") == 0) {
     releaseMagnet();
-    Serial.println("ok");
     
   } else if (strcmp(params[0], "scan") == 0) {
+    Serial.print("occupied:");
     for (int i = 0; i < 64; i++) {
       if (realSquareOccupied[i]) {
-        Serial.print(square2Name(i));
         Serial.print(" ");
+        Serial.print(square2Name(i));
       }
     }
     Serial.println("");
-    Serial.println("ok");
     
   } else if (strcmp(params[0], "home") == 0) {
     homeSteppers();
-    Serial.println("ok");
     
   }
 }
