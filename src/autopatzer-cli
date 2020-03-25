@@ -7,6 +7,7 @@ use lib 'lib';
 
 use Autopatzer;
 use IO::Select;
+use Try::Tiny;
 
 my $myturn = 1;
 my $move;
@@ -48,16 +49,21 @@ while (1) {
         } else {
             my $line = <>;
             chomp $line;
-            if ($move && !$myturn) {
-                $ap->moveWithoutMotors($move);
-                $move = '';
-                $myturn = 1;
-                print "Now input a move for white:\n";
-            } elsif ($myturn) {
-                $ap->moveWithMotors($line);
-                $myturn = 0;
-                print "Now move black on the board...\n";
-            }
+
+            try {
+                if ($move && !$myturn) {
+                    $ap->moveWithoutMotors($move);
+                    $move = '';
+                    $myturn = 1;
+                    print "Now input a move for white:\n";
+                } elsif ($myturn) {
+                    $ap->moveWithMotors($line);
+                    $myturn = 0;
+                    print "Now move black on the board...\n";
+                }
+            } catch {
+                warn $_;
+            };
         }
     }
 }

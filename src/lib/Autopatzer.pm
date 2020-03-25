@@ -5,6 +5,7 @@ use warnings;
 
 use Chess::Rep;
 use IO::Select;
+use List::PriorityQueue;
 
 sub new {
     my ($pkg, %opts) = @_;
@@ -26,6 +27,11 @@ sub new {
 
     $self->{ready} = 1;
     $self->{occupied} = {};
+
+    # we don't actually know motor positions yet, but it's only going to be used for shortest path computation anyway,
+    # so the worst case is we have a single suboptimal path
+    $self->{motorx} = 0;
+    $self->{motory} = 0;
 
     # TODO: get this from "scan", don't just assume
     for my $y (1..8) {
@@ -140,9 +146,14 @@ sub moveWithMotors {
     if ($m->{san} =~ /x/) {
         # TODO: if it was an en passant capture, move the correct square
         $self->movePiece(lc $m->{to}, 'xx');
+        $self->scan(1);
     }
 
     $self->movePiece(lc $m->{from}, lc $m->{to});
+
+    # TODO: if they castled, now move the rook
+
+    # TODO: if it was a pawn promotion, ask for the right piece to be placed on the square
 }
 
 # figure out the best route to move a piece from $from to $to without knocking over any others, and move it
@@ -153,15 +164,91 @@ sub movePiece {
     my ($fromx,$fromy) = square2XY($from);
     my ($tox,$toy) = square2XY($to);
 
-    if ($to eq 'xx') {
-        ($tox,$toy) = (5, 0);
+    my @xdir = (-1, -1, 0, 1, 1, 1, 0, -1);
+    my @ydir = (0, -1, -1, -1, 0, 1, 1, 1);
+
+    # find the shortest path that starts at fromx,fromy and ends at tox,toy (or any square off the board, if $to eq 'xx')
+    # (dijkstra's algorithm)
+    my %visited = ("$fromx,$fromy" => 1);
+    my $q = List::PriorityQueue->new();
+    $q->insert({x=>$fromx,y=>$fromy, len=>0, steps=>[['goto',$fromx,$fromy],['grab']]});
+    my $steps;
+    while (my $node = $q->pop) {
+        print "---\n($node->{x},$node->{y})\n";
+
+        if (($to eq 'xx' && ($node->{x} == 0 || $node->{x} == 9 || $node->{y} == 0 || $node->{y} == 9)) || ($node->{x} == $tox && $node->{y} == $toy)) {
+            $steps = $node->{steps};
+            last;
+        }
+
+        for my $dir (0..7) {
+            my $dx = $xdir[$dir];
+            my $dy = $ydir[$dir];
+
+            my ($x,$y) = ($node->{x},$node->{y});
+
+            while (1) {
+                $x += $dx;
+                $y += $dy;
+
+                # don't move off the board (note: the (0,9) exception is because the motor will get caught in the wires in that corner!)
+                last if $x < 0 || $x > 9 || $y < 0 || $y > 9 || ($x == 0 && $y == 9);
+
+                print "Try " . XY2square($x,$y) . "\n";
+
+                my $thesesteps = [@{ $node->{steps} }, ['goto',$x,$y]];
+                my $thislen = $node->{len} + $self->movementCost($node->{x},$node->{y},$x,$y);
+
+                my $square_occupied = 0;
+                $square_occupied = 1 if $x > 0 && $x < 9 && $y > 0 && $y < 9 && $self->{occupied}{XY2square($x,$y)};
+                last if $square_occupied; # TODO: add a step (and some length) to move the piece out of the way and try again (requires a per-node map of where the pieces are, which %visited takes into account, etc.)
+
+                print "Hit " . XY2square($x,$y) . "\n";
+
+                if (!$visited{"$x,$y"}) {
+                    $q->insert({
+                        x=>$x,
+                        y=>$y,
+                        len => $thislen,
+                        steps => $thesesteps,
+                    }, $thislen);
+                    $visited{"$x,$y"} = 1;
+                }
+            }
+        }
     }
 
+    die "no route found???" if !$steps;
+
+    print "Route found!\n";
+
     my $fh = $self->{fh};
-    $self->moveMotors($fromx,$fromy,1);
-    $self->grabMagnet();
-    $self->moveMotors($tox,$toy,1);
+    for my $step (@$steps) {
+        my ($cmd, $arg1, $arg2) = @$step;
+        die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
+        if ($cmd eq 'goto') {
+            $self->moveMotors($arg1,$arg2,1);
+        } elsif ($cmd eq 'grab') {
+            $self->grabMagnet();
+        } elsif ($cmd eq 'release') {
+            $self->releaseMagnet();
+        }
+    }
     $self->releaseMagnet();
+}
+
+sub movementCost {
+    my ($self, $fromx,$fromy, $tox,$toy) = @_;
+
+    my $dx = abs($tox-$fromx);
+    my $dy = abs($toy-$fromy);
+
+    # it doesn't actually take any longer to travel diagonally than in a straight line,
+    # it just makes for weird-looking routes
+    my $len = sqrt($dx*$dx + $dy*$dy);
+
+    # TODO: take into account acceleration
+    return ($dx > $dy ? $dx : $dy) + 0.5 + 0.1*$len;
 }
 
 # move the motors to (x, y) and wait until done
@@ -171,6 +258,8 @@ sub moveMotors {
     my $fh = $self->{fh};
     print $fh "goto $x $y\nwait\n";
     $self->blockUntil("waited") if $block;
+    $self->{motorx} = $x;
+    $self->{motory} = $y;
 }
 
 sub grabMagnet {
