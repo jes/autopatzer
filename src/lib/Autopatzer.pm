@@ -51,8 +51,6 @@ sub read {
     print "read...\n";
     sysread($self->{fh}, $self->{buf}, 1024, length($self->{buf}));
 
-    print "{{{ $self->{buf} }}}\n";
-
     while ($self->{buf} =~ s/^(.*?\n)//m) {
         my $line = $1;
         $line =~ s/[\r\n]//gm;
@@ -70,6 +68,14 @@ sub read {
                 delete $self->{occupied}{$sqr};
             } else {
                 $self->{occupied}{$sqr} = 1;
+            }
+
+            # remember which piece belonging to the non-moving player was last lifted, so
+            # that we have a chance of guessing which square a capture was made on
+            my $remember_white = !($self->{game}->to_move);
+            my $is_white = !!($self->{game}->get_piece_at($sqr) & 0x80);
+            if ($up && ($remember_white == $is_white)) {
+                $self->{last_lifted} = $sqr;
             }
         }
 
@@ -116,12 +122,14 @@ sub moveWithoutMotors {
     my ($self, $move) = @_;
 
     $self->{game}->go_move($move);
+    $self->{last_lifted} = undef;
 }
 
 sub moveWithMotors {
     my ($self, $move, $block) = @_;
 
     my $m = $self->{game}->go_move($move);
+    $self->{last_lifted} = undef;
 
     my $fromx = $m->{from_row}+1;
     my $fromy = $m->{from_col}+1;
@@ -155,22 +163,27 @@ sub moveShown {
 
     my $nlost = @lost;
     my $ngained = @gained;
-    print "$nlost lost and $ngained gained\n";
 
     print "lost: " . join(' ', @lost) . "\n";
     print "gained: " . join(' ', @gained) . "\n";
 
-    if (@lost == 1 && @gained == 1) {
+    # 1 lost and 0 gained: piece captured
+    # 2 lost and 2 gained: castling
+    # 2 lost and 1 gained: en passant capture
+    # other: illegal
+    if (@lost == 1 && @gained == 1) { # normal move
         my $from = $lost[0];
         my $to = $gained[0];
         return "$from$to";
-    } else {
-        # 1 lost and 0 gained: piece captured
-        # 2 lost and 2 gained: castling
-        # 2 lost and 1 gained: en passant capture
-        # other: illegal
-        return undef;
+    } elsif (@lost == 1 && @gained == 0) { # piece captured
+        # assume that the last non-moving player's piece that was lifted is the one that was captured
+        if ($self->{last_lifted}) {
+            my $from = $lost[0];
+            return "$from$self->{last_lifted}";
+        }
     }
+
+    return undef;
 }
 
 sub XY2square {
