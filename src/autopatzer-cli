@@ -54,7 +54,7 @@ while (1) {
                 $myturn = 1;
                 print "Now input a move for white:\n";
             } elsif ($myturn) {
-                $ap->moveWithMotors($line, 1);
+                $ap->moveWithMotors($line);
                 $myturn = 0;
                 print "Now move black on the board...\n";
             }

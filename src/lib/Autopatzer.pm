@@ -126,7 +126,7 @@ sub moveWithoutMotors {
 }
 
 sub moveWithMotors {
-    my ($self, $move, $block) = @_;
+    my ($self, $move) = @_;
 
     my $m = $self->{game}->go_move($move);
     $self->{last_lifted} = undef;
@@ -136,11 +136,55 @@ sub moveWithMotors {
     my $tox = $m->{to_row}+1;
     my $toy = $m->{to_col}+1;
 
+    # captured a piece: drag it off the board
+    if ($m->{san} =~ /x/) {
+        # TODO: if it was an en passant capture, move the correct square
+        $self->movePiece(lc $m->{to}, 'xx');
+    }
+
+    $self->movePiece(lc $m->{from}, lc $m->{to});
+}
+
+# figure out the best route to move a piece from $from to $to without knocking over any others, and move it
+# set to to 'xx' to remove the piece from the board in any direction
+sub movePiece {
+    my ($self, $from, $to) = @_;
+
+    my ($fromx,$fromy) = square2XY($from);
+    my ($tox,$toy) = square2XY($to);
+
+    if ($to eq 'xx') {
+        ($tox,$toy) = (5, 0);
+    }
+
     my $fh = $self->{fh};
-    print $fh "goto $fromx $fromy\nwait\n";
+    $self->moveMotors($fromx,$fromy,1);
+    $self->grabMagnet();
+    $self->moveMotors($tox,$toy,1);
+    $self->releaseMagnet();
+}
+
+# move the motors to (x, y) and wait until done
+sub moveMotors {
+    my ($self, $x, $y, $block) = @_;
+
+    my $fh = $self->{fh};
+    print $fh "goto $x $y\nwait\n";
     $self->blockUntil("waited") if $block;
-    print $fh "grab\ngoto $tox $toy\nwait\nrelease\n";
-    $self->blockUntil("waited") if $block;
+}
+
+sub grabMagnet {
+    my ($self) = @_;
+
+    my $fh = $self->{fh};
+    print $fh "grab\n";
+}
+
+sub releaseMagnet {
+    my ($self) = @_;
+
+    my $fh = $self->{fh};
+    print $fh "release\n";
 }
 
 sub moveShown {
@@ -167,6 +211,7 @@ sub moveShown {
     print "lost: " . join(' ', @lost) . "\n";
     print "gained: " . join(' ', @gained) . "\n";
 
+    # 1 lost and 1 gained: normal move or pawn promotion
     # 1 lost and 0 gained: piece captured
     # 2 lost and 2 gained: castling
     # 2 lost and 1 gained: en passant capture
