@@ -171,10 +171,10 @@ sub movePiece {
     # (dijkstra's algorithm)
     my %visited = ("$fromx,$fromy" => 1);
     my $q = List::PriorityQueue->new();
-    $q->insert({x=>$fromx,y=>$fromy, len=>0, steps=>[['goto',$fromx,$fromy],['grab']]});
+    $q->insert({x=>$fromx,y=>$fromy, len=>0, steps=>[['goto',$fromx,$fromy],['grab']]},0);
     my $steps;
     while (my $node = $q->pop) {
-        print "---\n($node->{x},$node->{y})\n";
+        $visited{"$node->{x},$node->{y}"} = 1;
 
         if (($to eq 'xx' && ($node->{x} == 0 || $node->{x} == 9 || $node->{y} == 0 || $node->{y} == 9)) || ($node->{x} == $tox && $node->{y} == $toy)) {
             $steps = $node->{steps};
@@ -191,10 +191,8 @@ sub movePiece {
                 $x += $dx;
                 $y += $dy;
 
-                # don't move off the board (note: the (0,9) exception is because the motor will get caught in the wires in that corner!)
+                # don't move off the board (note: the (0,9) exception is because the electromagnet will get caught in the wires in that corner!)
                 last if $x < 0 || $x > 9 || $y < 0 || $y > 9 || ($x == 0 && $y == 9);
-
-                print "Try " . XY2square($x,$y) . "\n";
 
                 my $thesesteps = [@{ $node->{steps} }, ['goto',$x,$y]];
                 my $thislen = $node->{len} + $self->movementCost($node->{x},$node->{y},$x,$y);
@@ -203,8 +201,6 @@ sub movePiece {
                 $square_occupied = 1 if $x > 0 && $x < 9 && $y > 0 && $y < 9 && $self->{occupied}{XY2square($x,$y)};
                 last if $square_occupied; # TODO: add a step (and some length) to move the piece out of the way and try again (requires a per-node map of where the pieces are, which %visited takes into account, etc.)
 
-                print "Hit " . XY2square($x,$y) . "\n";
-
                 if (!$visited{"$x,$y"}) {
                     $q->insert({
                         x=>$x,
@@ -212,7 +208,6 @@ sub movePiece {
                         len => $thislen,
                         steps => $thesesteps,
                     }, $thislen);
-                    $visited{"$x,$y"} = 1;
                 }
             }
         }
@@ -220,9 +215,6 @@ sub movePiece {
 
     die "no route found???" if !$steps;
 
-    print "Route found!\n";
-
-    my $fh = $self->{fh};
     for my $step (@$steps) {
         my ($cmd, $arg1, $arg2) = @$step;
         die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
@@ -247,8 +239,9 @@ sub movementCost {
     # it just makes for weird-looking routes
     my $len = sqrt($dx*$dx + $dy*$dy);
 
-    # TODO: take into account acceleration
-    return ($dx > $dy ? $dx : $dy) + 0.5 + 0.1*$len;
+    # TODO: take into account acceleration (currently just +1 per step to minimise number of steps)
+    # XXX: must be integer
+    return int(100*$len) + 1;
 }
 
 # move the motors to (x, y) and wait until done
