@@ -8,6 +8,13 @@ use lib 'lib';
 use Autopatzer;
 use IO::Select;
 use Try::Tiny;
+use IPC::Run qw(start pump finish);
+
+my @stockfish = ('./stockfish_10_x64');
+my $in;
+my $out;
+
+my $h = start \@stockfish, \$in, \$out;
 
 my $myturn = 1;
 my $move;
@@ -29,38 +36,59 @@ my $ap = Autopatzer->new(
     },
 );
 
-my $s = IO::Select->new();
-$s->add(\*STDIN);
-$s->add($ap->{fh});
-
 # TODO: detect end of game, illegal moves, etc.
 
-print "Input a move for white:\n";
-
 while (1) {
-    my @ready = $s->can_read();
+    my $move = stockfish_move($ap->{game});
+    print "Play $move for white...\n";
+    $ap->moveWithMotors($move);
+    $myturn = 0;
+    print "Now move black on the board...\n";
+    input_black();
+}
 
-    for my $fh (@ready) {
-        if ($fh == $ap->{fh}) {
-            $ap->read();
-        } else {
-            my $line = <>;
-            chomp $line;
+sub input_black {
+    my $s = IO::Select->new();
+    $s->add(\*STDIN);
+    $s->add($ap->{fh});
 
-            try {
-                if ($move && !$myturn) {
-                    $ap->moveWithoutMotors($move);
-                    $move = '';
-                    $myturn = 1;
-                    print "Now input a move for white:\n";
-                } elsif ($myturn) {
-                    $ap->moveWithMotors($line);
-                    $myturn = 0;
-                    print "Now move black on the board...\n";
-                }
-            } catch {
-                warn $_;
-            };
+    my $done = 0;
+    while (!$done) {
+        my @ready = $s->can_read();
+
+        for my $fh (@ready) {
+            if ($fh == $ap->{fh}) {
+                $ap->read();
+            } else {
+                my $line = <>;
+                chomp $line;
+
+                try {
+                    if ($move) {
+                        $ap->moveWithoutMotors($move);
+                        $move = '';
+                        $myturn = 1;
+                        $done = 1;
+                    }
+                } catch {
+                    warn $_;
+                };
+            }
         }
     }
+}
+
+# return the position evaluation, in pawns
+sub stockfish_move {
+    my ($game) = @_;
+
+    my $fen = $game->get_fen;
+
+    $in = "position fen $fen\ngo depth 15\n";
+    pump $h while length $in;
+
+    pump $h until $out =~ /bestmove (\w+)/;
+    $out = '';
+
+    return $1;
 }

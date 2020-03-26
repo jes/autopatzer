@@ -141,7 +141,7 @@ sub moveWithMotors {
     if ($m->{san} =~ /x/) {
         # TODO: if it was an en passant capture, move the correct square
         $self->movePiece(lc $m->{to}, 'xx');
-        $self->scan(1);
+        delete $self->{occupied}{lc $m->{to}};
     }
 
     $self->movePiece(lc $m->{from}, lc $m->{to});
@@ -157,7 +157,8 @@ sub movePiece {
     my ($self, $from, $to) = @_;
 
     my ($fromx,$fromy) = square2XY($from);
-    my ($tox,$toy) = square2XY($to);
+    my ($tox,$toy) = (-1, -1);
+    ($tox,$toy) = square2XY($to) if $to ne 'xx';
 
     my @xdir = (-1, -1, 0, 1, 1, 1, 0, -1);
     my @ydir = (0, -1, -1, -1, 0, 1, 1, 1);
