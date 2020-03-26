@@ -12,7 +12,7 @@ extern bool squareOccupied[64];
 extern unsigned long lastChange[64];
 bool realSquareOccupied[64];
 
-int magnetState = 0;
+bool magnetState = false;
 int squareSize = 480; // steps per square
 unsigned long magnetActivated;
 unsigned long lastMovement;
@@ -46,16 +46,13 @@ void movePiece(int startx, int starty, int endx, int endy) {
   releaseMagnet();
 }
 
-int loops = 0;
-int ts = 0;
-
 void grabMagnet() {
   magnetActivated = millis();
-  magnetState = 1;
+  magnetState = true;
   digitalWrite(9, HIGH);
 }
 void releaseMagnet() {
-  magnetState = 0;
+  magnetState = false;
   digitalWrite(9, LOW);
 }
 

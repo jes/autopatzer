@@ -30,20 +30,19 @@ void initSteppers(int en1, int step1, int dir1, int en2, int step2, int dir2) {
   stepper[1] = s1;
 }
 
-// set state=true when electromagnet is grabbed, state=false when it's released
-void targetSteppers(int x, int y, int state) {
+void targetSteppers(int x, int y, int magnetState) {
   if (invert1)
     x = -x;
   if (invert2)
     y = -y;
-    
+
   stepper[0].moveTo(x);
-  stepper[0].setMaxSpeed(maxvel[state]);
-  stepper[0].setAcceleration(maxacc[state]);
+  stepper[0].setMaxSpeed(maxvel[magnetState]);
+  stepper[0].setAcceleration(maxacc[magnetState]);
   
   stepper[1].moveTo(y);
-  stepper[1].setMaxSpeed(maxvel[state]);
-  stepper[1].setAcceleration(maxacc[state]);
+  stepper[1].setMaxSpeed(maxvel[magnetState]);
+  stepper[1].setAcceleration(maxacc[magnetState]);
 }
 
 void updateSteppers() {
