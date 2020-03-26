@@ -169,19 +169,19 @@ sub movePiece {
 
     # find the shortest path that starts at fromx,fromy and ends at tox,toy (or any square off the board, if $to eq 'xx')
     # (dijkstra's algorithm)
-    # state: motorx, motory, magnetstate, boardstate, pathlength
+    # state: motorx, motory, magnetstate, boardstate (remember pieces can be half-way between squares), pathlength
     # possible state transitions:
     #  - [grab magnet, ]move a piece in a straight/diagonal line to the centre of an unoccupied square;
-    #  - [release magnet, ]move to a different piece, grab piece, move it to one of the 4 corners of its square or to an unoccupied adjacent square, release magnet
+    #  - [release magnet, ]move to a different piece, grab piece, move it to one of the 4 corners of its square, release magnet
     my %visited = ("$fromx,$fromy" => 1);
     my $q = List::PriorityQueue->new();
-    $q->insert({x=>$fromx,y=>$fromy, len=>0, steps=>[['goto',$fromx,$fromy],['grab']]},0);
-    my $steps;
+    $q->insert({x=>$fromx,y=>$fromy, len=>0, cmds=>[['goto',$fromx,$fromy],['grab']]},0);
+    my $cmds;
     while (my $node = $q->pop) {
         $visited{"$node->{x},$node->{y}"} = 1;
 
         if (($to eq 'xx' && ($node->{x} == 0 || $node->{x} == 9 || $node->{y} == 0 || $node->{y} == 9)) || ($node->{x} == $tox && $node->{y} == $toy)) {
-            $steps = $node->{steps};
+            $cmds = $node->{cmds};
             last;
         }
 
@@ -198,29 +198,29 @@ sub movePiece {
                 # don't move off the board (note: the (0,9) exception is because the electromagnet will get caught in the wires in that corner!)
                 last if $x < 0 || $x > 9 || $y < 0 || $y > 9 || ($x == 0 && $y == 9);
 
-                my $thesesteps = [@{ $node->{steps} }, ['goto',$x,$y]];
+                my $thesecmds = [@{ $node->{cmds} }, ['goto',$x,$y]];
                 my $thislen = $node->{len} + $self->movementCost($node->{x},$node->{y},$x,$y);
 
                 my $square_occupied = 0;
                 $square_occupied = 1 if $x > 0 && $x < 9 && $y > 0 && $y < 9 && $self->{occupied}{XY2square($x,$y)};
-                last if $square_occupied; # TODO: add a step (and some length) to move the piece out of the way and try again (requires a per-node map of where the pieces are, which %visited takes into account, etc.)
+                last if $square_occupied;
 
                 if (!$visited{"$x,$y"}) {
                     $q->insert({
                         x=>$x,
                         y=>$y,
                         len => $thislen,
-                        steps => $thesesteps,
+                        cmds => $thesecmds,
                     }, $thislen);
                 }
             }
         }
     }
 
-    die "no route found???" if !$steps;
+    die "no route found???" if !$cmds;
 
-    for my $step (@$steps) {
-        my ($cmd, $arg1, $arg2) = @$step;
+    for my $cmd (@$cmds) {
+        my ($cmd, $arg1, $arg2) = @$cmd;
         die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
         if ($cmd eq 'goto') {
             $self->moveMotors($arg1,$arg2,1);
