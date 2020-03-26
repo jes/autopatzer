@@ -33,14 +33,11 @@ my $s = IO::Select->new();
 $s->add(\*STDIN);
 $s->add($ap->{fh});
 
-die "reset the pieces: " . join(' ', sort keys %{ $ap->{occupied} }) . "\n" unless $ap->boardIsReset;
-
 # TODO: detect end of game, illegal moves, etc.
 
 print "Input a move for white:\n";
 
 while (1) {
-    print "outer can_read...\n";
     my @ready = $s->can_read();
 
     for my $fh (@ready) {

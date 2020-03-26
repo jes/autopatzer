@@ -14,18 +14,16 @@ sub new {
 
     die "Autopatzer->new() missing argument: device\n" if !$self->{device};
 
-    # TODO: set baud rate with stty
+    # configure serial port
+    # no idea what the hex numbers mean, I got them from "stty -g" after getting the port into a workable state using Arduino serial monitor
+    system("stty -F \Q$self->{device}\E 4:0:8bd:a30:3:1c:7f:15:4:0:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0");
 
     open( $self->{fh}, '+<', $self->{device} )
         or die "can't open $self->{device}: $!\n";
 
     $self->{game} = Chess::Rep->new;
     $self->{ready} = 0;
-
-    # consume & discard any pending data
-    1 while $self->read(0);
-
-    $self->{ready} = 1;
+    $self->{buf} = '';
     $self->{occupied} = {};
 
     # we don't actually know motor positions yet, but it's only going to be used for shortest path computation anyway,
@@ -33,12 +31,12 @@ sub new {
     $self->{motorx} = 0;
     $self->{motory} = 0;
 
-    # TODO: get this from "scan", don't just assume
-    for my $y (1..8) {
-        for my $x (1,2,7,8) {
-            $self->{occupied}{XY2square($x,$y)} = 1;
-        }
-    }
+    # consume & discard any pending data
+    1 while $self->read(0);
+
+    die "reset the pieces: " . join(' ', sort keys %{ $self->{occupied} }) . "\n" unless $self->boardIsReset;
+
+    $self->{ready} = 1;
 
     return $self;
 }
@@ -49,12 +47,9 @@ sub read {
     my $s = IO::Select->new;
     $s->add($self->{fh});
 
-    print "can_read...\n";
     my @ready = IO::Select->new($self->{fh})->can_read($timeout);
     return 0 unless @ready;
 
-    # TODO: will this block if less than a full line is available?
-    print "read...\n";
     sysread($self->{fh}, $self->{buf}, 1024, length($self->{buf}));
 
     while ($self->{buf} =~ s/^(.*?\n)//m) {
