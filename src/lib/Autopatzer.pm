@@ -169,6 +169,10 @@ sub movePiece {
 
     # find the shortest path that starts at fromx,fromy and ends at tox,toy (or any square off the board, if $to eq 'xx')
     # (dijkstra's algorithm)
+    # state: motorx, motory, magnetstate, boardstate, pathlength
+    # possible state transitions:
+    #  - [grab magnet, ]move a piece in a straight/diagonal line to the centre of an unoccupied square;
+    #  - [release magnet, ]move to a different piece, grab piece, move it to one of the 4 corners of its square or to an unoccupied adjacent square, release magnet
     my %visited = ("$fromx,$fromy" => 1);
     my $q = List::PriorityQueue->new();
     $q->insert({x=>$fromx,y=>$fromy, len=>0, steps=>[['goto',$fromx,$fromy],['grab']]},0);
