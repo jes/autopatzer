@@ -84,7 +84,7 @@ sub stockfish_move {
 
     my $fen = $game->get_fen;
 
-    $in = "position fen $fen\ngo depth 10\n";
+    $in = "position fen $fen\ngo depth 5\n";
     pump $h while length $in;
 
     pump $h until $out =~ /bestmove (\w+)/;
