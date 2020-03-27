@@ -147,10 +147,27 @@ sub moveWithMotors {
     }
 
     $self->movePiece(lc $m->{from}, lc $m->{to});
+    delete $self->{occupied}{lc $m->{from}};
+    $self->{occupied}{lc $m->{to}} = 1;
 
-    # TODO: if they castled, now move the rook
+    # if they castled, now move the rook
+    if ($m->{san} =~ /O/) {
+        # if the king moved to g1, move the rook from h1 to f1
+        my %castle_rookmove = (
+            g1 => ['h1','f1'],
+            c1 => ['a1','d1'],
+            g8 => ['h8','f8'],
+            c8 => ['a8','d8'],
+        );
+        my ($from,$to) = @{ $castle_rookmove{lc $m->{to}} };
+        $self->movePiece($from,$to);
+        delete $self->{occupied}{$from};
+        $self->{occupied}{$to} = 1;
+    }
 
-    # TODO: if it was a pawn promotion, ask for the right piece to be placed on the square
+    if ($m->{promote}) {
+        # TODO: if it was a pawn promotion, ask for the right piece to be placed on the square
+    }
 
     $self->{ready} = 1;
 }
@@ -481,6 +498,17 @@ sub moveShown {
             my $from = $lost[0];
             return "$from$self->{last_lifted}";
         }
+    } elsif (@lost == 2 && @gained == 2) { # castling
+        @lost = sort @lost;
+        @gained = sort @gained;
+        my %castle = (
+            "e1,h1,f1,g1" => "e1g1",
+            "e8,h8,f8,g8" => "e8g8",
+            "a1,e1,c1,d1" => "e1c1",
+            "a8,e8,c8,d8" => "e8c8",
+        );
+        my $s = join(',', @lost, @gained);
+        return $castle{$s} if $castle{$s};
     }
 
     return undef;
