@@ -137,6 +137,8 @@ sub moveWithMotors {
     my $tox = $m->{to_row}+1;
     my $toy = $m->{to_col}+1;
 
+    $self->{ready} = 0;
+
     # captured a piece: drag it off the board
     if ($m->{san} =~ /x/) {
         # TODO: if it was an en passant capture, move the correct square
@@ -149,19 +151,19 @@ sub moveWithMotors {
     # TODO: if they castled, now move the rook
 
     # TODO: if it was a pawn promotion, ask for the right piece to be placed on the square
+
+    $self->{ready} = 1;
 }
 
 # figure out the best route to move a piece from $from to $to without knocking over any others, and move it
 # set $to to 'xx' to remove the piece from the board in any direction
+# TODO: refactor this into several functions, and probably move into Autopatzer::Routing or something
 sub movePiece {
     my ($self, $from, $to) = @_;
 
     my ($fromx,$fromy) = square2XY($from);
     my ($tox,$toy) = (-1, -1);
     ($tox,$toy) = square2XY($to) if $to ne 'xx';
-
-    my @xdir = (-1, -1, 0, 1, 1, 1, 0, -1);
-    my @ydir = (0, -1, -1, -1, 0, 1, 1, 1);
 
     # find the shortest (in time) sequence of commands that gets the board position to an acceptable state
     # (dijkstra's algorithm)
@@ -172,6 +174,29 @@ sub movePiece {
     my $q = List::PriorityQueue->new();
     my %visited;
 
+    # function to calculate cost of some movements
+    my $commandsCost = sub {
+        my ($cmds) = @_;
+
+        my ($x,$y) = ($self->{motorx},$self->{motory});
+        my $magnet = 0;
+
+        my $cost = 0;
+        for my $c (@$cmds) {
+            my ($cmd, $arg1, $arg2) = @$c;
+            die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
+            if ($cmd eq 'goto') {
+                $cost += $self->movementCost($x,$y, $arg1,$arg2, $magnet);
+                ($x,$y) = ($arg1,$arg2);
+            } elsif ($cmd eq 'grab') {
+                $magnet = 1;
+            } elsif ($cmd eq 'release') {
+                $magnet = 0;
+            }
+        }
+        return $cost;
+    };
+
     # functions to hash boards & dijkstra states
     my $strboard = sub {
         my ($b) = @_;
@@ -179,8 +204,7 @@ sub movePiece {
     };
     my $hash = sub {
         my ($s) = @_;
-        my $strcmds = join(':', map { join(',', @$_) } @{ $s->{cmds} });
-        return join('.', $s->{x}, $s->{y}, $s->{piecex}, $s->{piecey}, $s->{magnet}, $s->{len}, $strcmds, $strboard->($s->{board}));
+        return join('.', $s->{x}, $s->{y}, $s->{piecex}, $s->{piecey}, $s->{magnet}, $strboard->($s->{board}));
     };
 
     # current state:
@@ -207,7 +231,9 @@ sub movePiece {
 
         magnet => 0, # magnet state
         len => 0, # total path cost so far
-        cmds => [], # steps to carry out at the end
+        begin_cmds => [], # preparation steps (moving pieces out of the way)
+        cmds => [], # steps to carry out to move the piece
+        finish_cmds => [], # undoing preparation steps
         board => $occupied_board, # board representation
 
         # XXX: if adding new fields, make sure to consider them in $hash->() as well!
@@ -216,13 +242,18 @@ sub movePiece {
     while (my $node = $q->pop) {
         $visited{$hash->($node)} = 1;
 
-        # we've found the solution if the board matches what we want and there are no pieces displaced to the corner of their square
-        if ($strboard->($node->{board}) eq $wanted_strboard) {
-            $cmds = $node->{cmds};
+        my ($px,$py) = ($node->{piecex},$node->{piecey});
+        if (($to eq 'xx' && ($px == 0 || $px == 9 || $py == 0 || $py == 9))
+                || ($px == $tox && $py == $toy)) {
+            print "length = $node->{len}\n";
+            print "board = " . $strboard->($node->{board}) . "\n";
+            $cmds = [ @{ $node->{begin_cmds} }, @{ $node->{cmds} }, ['release'], @{ $node->{finish_cmds} } ];
             last;
         }
 
         #  - [release magnet, move to the piece, grab magnet, ]move the piece in a straight/diagonal line to the centre of an unoccupied square;
+        my @xdir = (-1, -1, 0, 1, 1, 1, 0, -1);
+        my @ydir = (0, -1, -1, -1, 0, 1, 1, 1);
         for my $dir (0..7) {
             my $dx = $xdir[$dir];
             my $dy = $ydir[$dir];
@@ -236,8 +267,63 @@ sub movePiece {
                 # don't move off the board (note: the (0,9) exception is because the electromagnet will get caught in the wires in that corner!)
                 last if $x < 0 || $x > 9 || $y < 0 || $y > 9 || ($x == 0 && $y == 9);
 
+                # don't pass through displaced pieces
+                my ($halfx,$halfy) = ($x-$dx/2, $y-$dy/2); # this is the corner that we would have just passed through to get to ($x,$y) - halfway between ($x,$y) and ($x-$dx,$y-$dy)
+                last if $node->{board}{"$halfx,$halfy"};
+
+                # don't pass too close to displaced pieces
+                if ($dx == 0) {
+                    my $xp = $x+0.5;
+                    my $xm = $x-0.5;
+                    last if $node->{board}{"$xp,$halfy"} || $node->{board}{"$xm,$halfy"};
+                } elsif ($dy == 0) {
+                    my $yp = $y+0.5;
+                    my $ym = $y-0.5;
+                    last if $node->{board}{"$halfx,$yp"} || $node->{board}{"$halfx,$ym"};
+                }
+
+                # if we'd want to move on to a non-displaced piece, displace it instead so that we can try again next time around
+                if ($node->{board}{"$x,$y"}) {
+                    for my $displace ([-0.5,-0.5], [-0.5,0.5], [0.5,-0.5], [0.5,0.5]) {
+                        my ($dispx,$dispy) = @$displace;
+                        my ($newx,$newy) = ($x+$dispx,$y+$dispy);
+
+                        # don't displace off the edge of the board (probably not possible here, but just in case)
+                        next if $newx < 0 || $newx > 9 || $newy < 0 || $newy > 9;
+
+                        next if $node->{board}{"$newx,$newy"};
+
+                        my $begin_cmds = [@{ $node->{begin_cmds} }];
+                        my $finish_cmds = [@{ $node->{finish_cmds} }];
+
+                        push @$begin_cmds, ['goto',$x,$y], ['grab'], ['goto',$newx,$newy], ['release'];
+                        unshift @$finish_cmds, ['goto',$newx,$newy], ['grab'], ['goto',$x,$y], ['release'];
+
+                        my $newboard = { %{ $node->{board} } };
+                        delete $newboard->{"$x,$y"};
+                        $newboard->{"$newx,$newy"} = 1;
+
+                         my $newnode = {
+                            x => $node->{x},
+                            y => $node->{y},
+                            piecex => $node->{piecex},
+                            piecey => $node->{piecey},
+                            magnet => $node->{magnet},
+                            len => $commandsCost->([@$begin_cmds, @{ $node->{cmds} }, @$finish_cmds]),
+                            begin_cmds => $begin_cmds,
+                            cmds => $node->{cmds},
+                            finish_cmds => $finish_cmds,
+                            board => $newboard,
+                        };
+
+                        if (!$visited{$hash->($newnode)}) {
+                            $q->insert($newnode, $newnode->{len});
+                        }
+                    }
+                    last;
+                }
+
                 my $newcmds = [@{ $node->{cmds} }];
-                my $newlen = $node->{len};
 
                 # if we're not already at the piece we want to move:
                 #     if the magnet is on, turn it off
@@ -247,17 +333,11 @@ sub movePiece {
                 if ($node->{x} != $node->{piecex} || $node->{y} != $node->{piecey}) {
                     push @$newcmds, ['release'] if $node->{magnet};
                     push @$newcmds, ['goto',$node->{piecex},$node->{piecey}], ['grab'];
-                    $newlen += $self->movementCost($node->{x}, $node->{y}, $node->{piecex}, $node->{piecey}); # TODO: movement is faster while not grabbed
                 } else {
                     push @$newcmds, ['grab'] if !$node->{magnet};
                 }
 
                 push @$newcmds, ['goto',$x,$y];
-                $newlen += $self->movementCost($node->{piecex},$node->{piecey},$x,$y);
-
-                # don't pass through other pieces
-                my ($halfx,$halfy) = ($x-$dx/2, $y-$dy/2); # this is the corner that we would have just passed through to get to ($x,$y) - halfway between ($x,$y) and ($x-$dx,$y-$dy)
-                last if $node->{board}{"$x,$y"} || $node->{board}{"$halfx,$halfy"};
 
                 my $newboard = { %{ $node->{board} } };
                 $newboard->{"$x,$y"} = 1 if $x > 0 && $x < 9 && $y > 0 && $y < 9;
@@ -269,24 +349,18 @@ sub movePiece {
                     piecex => $x,
                     piecey => $y,
                     magnet => 1,
-                    len => $newlen,
+                    len => $commandsCost->([@{ $node->{begin_cmds} }, @$newcmds, @{ $node->{finish_cmds} }]),
+                    begin_cmds => $node->{begin_cmds},
                     cmds => $newcmds,
+                    finish_cmds => $node->{finish_cmds},
                     board => $newboard,
                 };
 
                 if (!$visited{$hash->($newnode)}) {
-                    $q->insert($newnode, $newlen);
+                    $q->insert($newnode, $newnode->{len});
                 }
             }
         }
-
-        #  - [release magnet, ]move to a different piece, grab piece, move it to one of the 4 corners of its square, release magnet
-        # TODO: for each piece that is on a whole-numbered coordinate
-        # try moving it to each of its corners, unless corner is already occupied
-
-        #  - [release magnet, ]move to a displaced piece, grab it, move it to the centre of its square, release magnet
-        # TODO: for each piece that is on a fractional coordinate
-        # try moving it back to where it came from
     }
 
     die "no route found???" if !$cmds;
@@ -295,10 +369,13 @@ sub movePiece {
         my ($cmd, $arg1, $arg2) = @$cmd;
         die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
         if ($cmd eq 'goto') {
+            print "goto $arg1 $arg2\n";
             $self->moveMotors($arg1,$arg2,1);
         } elsif ($cmd eq 'grab') {
+            print "grab\n";
             $self->grabMagnet();
         } elsif ($cmd eq 'release') {
+            print "release\n";
             $self->releaseMagnet();
         }
     }
@@ -323,7 +400,7 @@ sub mailboxBoard {
 }
 
 sub movementCost {
-    my ($self, $fromx,$fromy, $tox,$toy) = @_;
+    my ($self, $fromx,$fromy, $tox,$toy, $grabbed) = @_;
 
     my $dx = abs($tox-$fromx);
     my $dy = abs($toy-$fromy);
@@ -332,8 +409,11 @@ sub movementCost {
     # it just makes for weird-looking routes
     my $len = sqrt($dx*$dx + $dy*$dy);
 
-    # TODO: take into account acceleration (currently just +1 per step to minimise number of steps)
-    # XXX: must be integer
+    $len *= 0.75 if !$grabbed;
+
+    # TODO: take into account acceleration
+
+    # this must be integer for List::PriorityQueue, I believe (it uses ">>" to do division)
     return int(100*$len) + 1;
 }
 
