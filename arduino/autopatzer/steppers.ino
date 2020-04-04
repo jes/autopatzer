@@ -7,9 +7,13 @@
 
 AccelStepper stepper[2];
 
+extern bool realSquareOccupied[64];
+
+const int squareSize = 480; // steps per square
+
 // configure max. velocity and acceleration while grabbed and not grabbed
-const int maxvel[2] = {3000 /*released*/, 1000 /*grabbed*/}; // steps per sec
-const int maxacc[2] = {20000 /*released*/, 10000 /*grabbed*/}; // steps per sec^2
+const int maxvel[2] = {4000 /*released*/, 1000 /*grabbed*/}; // steps per sec
+const int maxacc[2] = {20000 /*released*/, 5000 /*grabbed*/}; // steps per sec^2
 
 const int home1 = 4330;
 const int home2 = 4360;
@@ -59,7 +63,99 @@ bool finishedSteppers() {
   return stepper[0].distanceToGo() == 0 && stepper[1].distanceToGo() == 0;
 }
 
+bool magnetHomeSteppers() {
+  bool squareWasOccupied[64];
+
+  delay(250);
+
+  releaseMagnet();
+  waitHallSensors(100);
+  for (int i = 0; i < 64; i++)
+    squareWasOccupied[i] = realSquareOccupied[i];
+  grabMagnet();
+  waitHallSensors(100);
+
+  int homingSquare = -1;
+
+  for (int i = 0; i < 64; i++) {
+    if (realSquareOccupied[i] && !squareWasOccupied[i]) {
+        homingSquare = i;
+        break;
+    }
+  }
+
+  if (homingSquare == -1) {
+    releaseMagnet();
+    return false;
+  }
+
+  // now move around to detect the centre point of where we're detected
+  binarySearchOnSquare(0, homingSquare);
+  binarySearchOnSquare(1, homingSquare);
+
+  releaseMagnet();
+  waitHallSensors(100);
+
+  stepper[0].setCurrentPosition(squareSize * (homingSquare%8 + 1) * (invert1 ? -1 : 1));
+  stepper[1].setCurrentPosition(squareSize * (homingSquare/8 + 1) * (invert2 ? -1 : 1));
+
+  // TODO: validate by moving to an unoccupied square and switching the magnet on and off?
+
+  return true;
+}
+
+void binarySearchOnSquare(int motor, int sqr) {
+  const int threshold = 20;
+  int minLimit = 0;
+  int maxLimit = 0;
+  int minpos, maxpos;
+
+  stepper[motor].setCurrentPosition(0);
+  stepper[0].setMaxSpeed(maxvel[0]);
+  stepper[0].setAcceleration(maxacc[0]);
+  
+  minpos = -squareSize/2;
+  maxpos = 0;
+  // find the smallest position from minpos to maxpos that is occupied
+  while (minpos+threshold < maxpos) {
+    int midpos = (minpos+maxpos)/2;
+    stepper[motor].moveTo(midpos);
+    runSteppers();
+    waitHallSensors(100);
+    if (realSquareOccupied[sqr]) {
+      maxpos = midpos;
+    } else {
+      minpos = midpos+1;
+    }
+  }
+  minLimit = minpos;
+  
+  minpos = 0;
+  maxpos = squareSize/2;
+  // find the largest position from minpos to maxpos that is occupied
+  while (minpos+threshold < maxpos) {
+    int midpos = (minpos+maxpos)/2;
+    stepper[motor].moveTo(midpos);
+    runSteppers();
+    waitHallSensors(100);
+    if (!realSquareOccupied[sqr]) {
+      maxpos = midpos-1;
+    } else {
+      minpos = midpos;
+    }
+  }
+  maxLimit = minpos;
+
+  // finally, move to the centre point of the min and max limit
+  stepper[motor].moveTo((minLimit + maxLimit) / 2);
+  runSteppers();
+}
+
 void homeSteppers() {
+  // first try to home it using the electromagnet
+  //if (magnetHomeSteppers())
+  //  return;
+    
   stepper[0].setCurrentPosition(0);
   stepper[1].setCurrentPosition(0);
 

@@ -5,15 +5,10 @@
 
 #define BUFSZ 128
 
-const int pieceSettleMs = 50; // don't report a square changed until it has settled for N ms
-const int maxMagnetIdleMs = 20000; // don't let magnet stay on while idle for more than N ms
+extern bool realSquareOccupied[64];
+extern bool magnetState;
+extern const int squareSize;
 
-extern bool squareOccupied[64];
-extern unsigned long lastChange[64];
-bool realSquareOccupied[64];
-
-bool magnetState = false;
-int squareSize = 480; // steps per square
 unsigned long magnetActivated;
 unsigned long lastMovement;
 
@@ -26,12 +21,9 @@ void setup() {
 
   // hall sensors
   initHallSensors(0, 1, 2);
-  scanHallSensors();
-  for (int i = 0; i < 64; i++)
-    realSquareOccupied[i] = squareOccupied[i];
 
   // electromagnet
-  pinMode(9, OUTPUT);
+  initMagnet();
   
   Serial.println("autopatzer ready");
 }
@@ -46,39 +38,15 @@ void movePiece(int startx, int starty, int endx, int endy) {
   releaseMagnet();
 }
 
-void grabMagnet() {
-  magnetActivated = millis();
-  magnetState = true;
-  digitalWrite(9, HIGH);
-}
-void releaseMagnet() {
-  magnetState = false;
-  digitalWrite(9, LOW);
-}
 
 void loop() {
-  scanHallSensors();
-  for (int i = 0; i < 64; i++) {
-    if (millis() - lastChange[i] > pieceSettleMs && squareOccupied[i] != realSquareOccupied[i]) {
-      realSquareOccupied[i] = squareOccupied[i];
-      if (realSquareOccupied[i] ) {
-        Serial.print("piecedown "); Serial.println(square2Name(i));
-      } else {
-        Serial.print("pieceup "); Serial.println(square2Name(i));
-      }
-    }
-  }
-  
+  updateHallSensors();
   updateSteppers();
+  updateMagnet();
   updateSerial();
 
   if (!finishedSteppers())
     lastMovement = millis();
-
-  if (magnetState && millis() - lastMovement > maxMagnetIdleMs && millis() - magnetActivated > maxMagnetIdleMs) {
-    Serial.println("error: magnet on while idle, forcibly releasing");
-    releaseMagnet();
-  }
 }
 
 void updateSerial() {
@@ -129,6 +97,8 @@ void serialCommand(char *buf) {
       return;
     }
 
+    x += 0.1;
+
     targetSteppers(x * squareSize, y * squareSize, magnetState);
     
   } else if (strcmp(params[0], "wait") == 0) {
@@ -153,6 +123,8 @@ void serialCommand(char *buf) {
       }
     }
     Serial.println("");
+
+    //analogScanHallSensors();
     
   } else if (strcmp(params[0], "home") == 0) {
     homeSteppers();

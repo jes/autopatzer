@@ -2,10 +2,11 @@
  *  
  * James Stanley 2020
  */
- 
-const int analogThreshold = 770;
+
+const int pieceSettleMs = 50; // don't report a square changed until it has settled for N ms
 
 bool squareOccupied[64];
+bool realSquareOccupied[64];
 unsigned long lastChange[64];
 
 // map sensor locations to actual squares (0=a1, 7=h1, 8=a2, 56=a8, 63=h8)
@@ -20,6 +21,18 @@ int squareMap[64] = {
   33, 25, 22, 41, 57, 14, 48,  1,
 };
 
+// we set a different threshold for each square
+int analogThreshold[64] = {
+  700, 725, 680, 690, 670, 650, 675, 715,
+  700, 675, 700, 715, 670, 705, 670, 720,
+  720, 690, 680, 650, 680, 700, 710, 700,
+  700, 675, 725, 704, 690, 680, 640, 700,
+  690, 735, 660, 690, 635, 700, 700, 735,
+  690, 730, 670, 690, 710, 680, 700, 690,
+  660, 690, 630, 640, 700, 710, 705, 710,
+  710, 670, 680, 670, 700, 670, 670, 700,
+};
+
 int bit1pin, bit2pin, bit3pin;
 
 void initHallSensors(int bit1, int bit2, int bit3) {
@@ -29,6 +42,32 @@ void initHallSensors(int bit1, int bit2, int bit3) {
   pinMode(bit1, OUTPUT);
   pinMode(bit2, OUTPUT);
   pinMode(bit3, OUTPUT);
+
+  scanHallSensors();
+  for (int i = 0; i < 64; i++)
+    realSquareOccupied[i] = squareOccupied[i];
+}
+
+void waitHallSensors(int ms) {
+  unsigned long start = millis();
+
+  while (millis() < start+ms) {
+    updateHallSensors();
+  }
+}
+
+void updateHallSensors() {
+  scanHallSensors();
+  for (int i = 0; i < 64; i++) {
+    if (millis() - lastChange[i] > pieceSettleMs && squareOccupied[i] != realSquareOccupied[i]) {
+      realSquareOccupied[i] = squareOccupied[i];
+      if (realSquareOccupied[i] ) {
+        Serial.print("piecedown "); Serial.println(square2Name(i));
+      } else {
+        Serial.print("pieceup "); Serial.println(square2Name(i));
+      }
+    }
+  }
 }
 
 void scanHallSensors() {
@@ -41,12 +80,39 @@ void scanHallSensors() {
       updateSteppers(); // HACK: don't let scanHallSensors() block stepper motor operation
       int sqr = squareMap[i*8+j];
       int val = analogRead(j);
-      bool occ = val > analogThreshold;
+      bool occ = val > (analogThreshold[sqr] + 5);
       if (squareOccupied[sqr] != occ) {
         squareOccupied[sqr] = occ;
         lastChange[sqr] = millis();
       }
     }
+  }
+}
+
+void analogScanHallSensors() {
+  int maxRead[64];
+  for (int i = 0; i < 64; i++)
+    maxRead[i] = 0;
+  for (int n = 0; n < 100; n++) {
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(bit1pin, i&1);
+    digitalWrite(bit2pin, i&2);
+    digitalWrite(bit3pin, i&4);
+    // XXX: do we need to wait between writing to the bit pins and reading from the analogue pins?
+    for (int j = 0; j < 8; j++) {
+      int sqr = squareMap[i*8+j];
+      int val = analogRead(j);
+      if (val > maxRead[sqr])
+        maxRead[sqr] = val;
+    }
+  }
+  delay(10);
+  }
+
+  for (int i = 0; i < 64; i++) {
+    Serial.print(i); Serial.print(" = "); Serial.print(maxRead[i]); Serial.print("; ");
+    if (i % 8 == 7)
+      Serial.print("\n");
   }
 }
 
