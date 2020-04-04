@@ -6,6 +6,7 @@ use warnings;
 use Chess::Rep;
 use IO::Select;
 use List::PriorityQueue;
+use Time::HiRes qw(usleep);
 
 sub new {
     my ($pkg, %opts) = @_;
@@ -34,7 +35,30 @@ sub new {
     # consume & discard any pending data
     1 while $self->read(0);
 
-    die "reset the pieces: " . join(' ', sort keys %{ $self->{occupied} }) . "\n" unless $self->boardIsReset;
+    # adjust the pieces??
+    my @adjusted;
+    $self->scan(1);
+    for my $x (1, 2, 7, 8) {
+        for my $y (1..8) {
+            my $sqr = XY2square($x,$y);
+            if (!$self->{occupied}{$sqr}) {
+                $self->adjust($sqr);
+                push @adjusted, $sqr;
+            }
+        }
+    }
+    if (@adjusted) {
+        usleep(100000); # let electromagnet turn off so that we can scan properly
+        $self->scan(1);
+        my $ok = 1;
+        for my $sqr (@adjusted) {
+            if (!$self->{occupied}{$sqr}) {
+                warn "fix $sqr\n";
+                $ok = 0;
+            }
+        }
+        die if !$ok;
+    }
 
     $self->{ready} = 1;
 
@@ -89,6 +113,31 @@ sub read {
     }
 
     return 1;
+}
+
+sub adjust {
+    my ($self, $sqr) = @_;
+
+    my $fh = $self->{fh};
+
+    my ($x, $y) = square2XY($sqr);
+
+    print $fh "goto $x $y\nwait\n";
+    $self->blockUntil('waited');
+    print $fh "grab\n";
+
+    my $wiggle = 0.05;
+
+    for my $dir ([+1,+1], [+1,-1], [-1,-1], [-1,+1]) {
+        my ($dx,$dy) = @$dir;
+        print $fh "goto " . ($x+$wiggle*$dx) . " " . ($y+$wiggle*$dy) . "\nwait\n";
+        $self->blockUntil('waited');
+    }
+    print $fh "goto $x $y\nwait\n";
+    $self->blockUntil('waited');
+    print $fh "release\n";
+
+    $self->scan(1);
 }
 
 sub blockUntil {
