@@ -12,7 +12,7 @@ extern bool realSquareOccupied[64];
 const int squareSize = 480; // steps per square
 
 // configure max. velocity and acceleration while grabbed and not grabbed
-const int maxvel[2] = {4000 /*released*/, 1000 /*grabbed*/}; // steps per sec
+const int maxvel[2] = {4000 /*released*/, 1500 /*grabbed*/}; // steps per sec
 const int maxacc[2] = {20000 /*released*/, 5000 /*grabbed*/}; // steps per sec^2
 
 const int home1 = 4330;

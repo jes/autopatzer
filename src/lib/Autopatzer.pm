@@ -190,9 +190,13 @@ sub moveWithMotors {
 
     # captured a piece: drag it off the board
     if ($m->{san} =~ /x/) {
-        # TODO: if it was an en passant capture, move the correct square
-        $self->movePiece(lc $m->{to}, 'xx');
-        delete $self->{occupied}{lc $m->{to}};
+        my $removepiece = lc $m->{to};
+
+        # if it was an en passant capture, move the correct square
+        $removepiece = $self->enPassantSquare($removepiece) if !$self->{game}->get_piece_at($removepiece);
+
+        $self->movePiece($removepiece, 'xx');
+        delete $self->{occupied}{$removepiece};
     }
 
     $self->movePiece(lc $m->{from}, lc $m->{to});
@@ -250,7 +254,6 @@ sub movePiece {
         my $cost = 0;
         for my $c (@$cmds) {
             my ($cmd, $arg1, $arg2) = @$c;
-            die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
             if ($cmd eq 'goto') {
                 $cost += $self->movementCost($x,$y, $arg1,$arg2, $magnet);
                 ($x,$y) = ($arg1,$arg2);
@@ -448,6 +451,15 @@ sub movePiece {
     $self->releaseMagnet();
 }
 
+# e.g. exf3 is an en-passant capture of the pawn on f4
+# so $self->enPassantSquare('f3') == 'f4'
+sub enPassantSquare {
+    my ($self, $square) = @_;
+
+    my %map = map { "${_}3" => "${_}4", "${_}6" => "${_}5" } qw(a b c d e f g h);
+    return $map{$square}||$square;
+}
+
 # return a hash mapping (x,y) to 1 if there's a piece on that square
 # TODO: this isn't actually what a mailbox is
 sub mailboxBoard {
@@ -465,22 +477,69 @@ sub mailboxBoard {
     return $m;
 }
 
+# NOTE: return value must be integer as it is used in List::PriorityQueue,
+# which operates on the value using ">>"
 sub movementCost {
     my ($self, $fromx,$fromy, $tox,$toy, $grabbed) = @_;
 
     my $dx = abs($tox-$fromx);
     my $dy = abs($toy-$fromy);
 
-    # it doesn't actually take any longer to travel diagonally than in a straight line,
-    # it just makes for weird-looking routes
-    my $len = sqrt($dx*$dx + $dy*$dy);
+    my $dist = $dx > $dx ? $dx : $dy;
 
-    $len *= 0.75 if !$grabbed;
+    # velocity/acceleration for released vs grabbed
+    # XXX: make sure this matches steppers.ino if in doubt
+    my @maxvel = (4000, 1500);
+    my @maxacc = (20000, 5000);
+    my $vel = $maxvel[$grabbed];
+    my $acc = $maxvel[$grabbed];
 
-    # TODO: take into account acceleration
+    # convert square distance into stepper motor steps, as that's the unit
+    # that maxvel/maxacc are in
+    $dist *= 480;
 
-    # this must be integer for List::PriorityQueue, I believe (it uses ">>" to do division)
-    return int(100*$len) + 1;
+    # find the distance required to reach maximum velocity
+    # (the distance to decelerate back to 0 is equal)
+    # v^2 = u^2 + 2as
+    # u = 0, v^2=2as
+    # s = v^2/2a
+    my $accdist = ($vel*$vel)/(2*$acc);
+
+    # if we hit maximum velocity, then we have an acceleration phase,
+    # constant speed phase, then deceleration; otherwise, we only
+    # have constant acceleration followed by constant deceleration
+    #
+    # we want to return the amount of time taken for this movement,
+    # in the arbitrary units of maxvel/maxacc from above
+    if ($dist > $accdist*2) {
+        # s = ut + 1/2at^2
+        # u = 0, t^2 = 2s/a
+        # t = sqrt(2s/a)
+        my $acctime = sqrt((2*$accdist)/$acc);
+
+        # v = s/t, t = s/v
+        # we remain at max. velocity for a distance equal to the total distance
+        # moved, minus the acceleration distances
+        my $maxveltime = ($dist-$accdist*2)/$vel;
+
+        # total time taken is the time to accelerate to full speed, plus the
+        # time taken to travel at full speed, plus the time taken to
+        # decelerate to 0
+        return int($acctime + $maxveltime + $acctime) + 1;
+    } else {
+        # we're accelerating for the first half, then decelerating for the second
+        # half, so the distance we accelerate for is half the total distance
+        $accdist = $dist/2;
+
+        # s = ut + 1/2at^2
+        # u = 0, t^2 = 2s/a
+        # t = sqrt(2s/a)
+        my $acctime = sqrt((2*$accdist)/$acc);
+
+        # total time taken is the time to accelerate for half the distance,
+        # plus the time to decelerate for the other half of the distance
+        return int($acctime * 2) + 1;
+    }
 }
 
 # move the motors to (x, y) and wait until done
@@ -540,6 +599,7 @@ sub moveShown {
     if (@lost == 1 && @gained == 1) { # normal move
         my $from = $lost[0];
         my $to = $gained[0];
+        # TODO: if it's a pawn moving to the 8th rank, ask what to promote it to, default to Q
         return "$from$to";
     } elsif (@lost == 1 && @gained == 0) { # piece captured
         # assume that the last non-moving player's piece that was lifted is the one that was captured
@@ -558,6 +618,7 @@ sub moveShown {
         );
         my $s = join(',', @lost, @gained);
         return $castle{$s} if $castle{$s};
+    } elsif (@lost == 2 && @gained == 1) { # en passant
     }
 
     return undef;
