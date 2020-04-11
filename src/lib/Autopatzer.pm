@@ -456,8 +456,8 @@ sub movePiece {
 sub enPassantSquare {
     my ($self, $square) = @_;
 
-    my %map = map { "${_}3" => "${_}4", "${_}6" => "${_}5" } qw(a b c d e f g h);
-    return $map{$square}||$square;
+    my %m = map { ("${_}3" => "${_}4", "${_}6" => "${_}5") } qw(a b c d e f g h);
+    return $m{$square}||$square;
 }
 
 # return a hash mapping (x,y) to 1 if there's a piece on that square
