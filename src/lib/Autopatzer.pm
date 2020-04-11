@@ -485,12 +485,15 @@ sub movementCost {
     my $dx = abs($tox-$fromx);
     my $dy = abs($toy-$fromy);
 
-    my $dist = $dx > $dx ? $dx : $dy;
+    # it's actually just as quick to go (4,4) as (4,0), but it
+    # looks strange, so we do this to penalise unnecessary diagonal
+    # movements
+    my $dist = sqrt($dx*$dx+$dy*$dy);
 
     # velocity/acceleration for released vs grabbed
     # XXX: make sure this matches steppers.ino if in doubt
-    my @maxvel = (4000, 1500);
-    my @maxacc = (20000, 5000);
+    my @maxvel = (4000, 4000);
+    my @maxacc = (20000, 10000);
     my $vel = $maxvel[$grabbed];
     my $acc = $maxvel[$grabbed];
 
@@ -499,7 +502,7 @@ sub movementCost {
     $dist *= 480;
 
     # find the distance required to reach maximum velocity
-    # (the distance to decelerate back to 0 is equal)
+    # (the distance to decelerate back to 0 again is equal)
     # v^2 = u^2 + 2as
     # u = 0, v^2=2as
     # s = v^2/2a
@@ -525,7 +528,7 @@ sub movementCost {
         # total time taken is the time to accelerate to full speed, plus the
         # time taken to travel at full speed, plus the time taken to
         # decelerate to 0
-        return int($acctime + $maxveltime + $acctime) + 1;
+        return int(1000 * ($acctime + $maxveltime + $acctime));
     } else {
         # we're accelerating for the first half, then decelerating for the second
         # half, so the distance we accelerate for is half the total distance
@@ -538,7 +541,7 @@ sub movementCost {
 
         # total time taken is the time to accelerate for half the distance,
         # plus the time to decelerate for the other half of the distance
-        return int($acctime * 2) + 1;
+        return int(1000 * $acctime * 2);
     }
 }
 
@@ -599,8 +602,13 @@ sub moveShown {
     if (@lost == 1 && @gained == 1) { # normal move
         my $from = $lost[0];
         my $to = $gained[0];
-        # TODO: if it's a pawn moving to the 8th rank, ask what to promote it to, default to Q
-        return "$from$to";
+        my $promote = '';
+        if ($self->{game}->get_piece_at($from) & 0x1 && $to =~ /^[18]$/) {
+            # TODO: ask what piece to promote to
+            $promote = 'q';
+        }
+
+        return "$from$to$promote";
     } elsif (@lost == 1 && @gained == 0) { # piece captured
         # assume that the last non-moving player's piece that was lifted is the one that was captured
         if ($self->{last_lifted}) {
