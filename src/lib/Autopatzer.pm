@@ -493,7 +493,7 @@ sub movementCost {
     # path
     my $dist = sqrt($dx*$dx+$dy*$dy);
 
-    return int($dist*100);
+    return int($dist*100)+1;
 }
 
 # move the motors to (x, y) and wait until done
