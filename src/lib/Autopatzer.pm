@@ -487,62 +487,13 @@ sub movementCost {
 
     # it's actually just as quick to go (4,4) as (4,0), but it
     # looks strange, so we do this to penalise unnecessary diagonal
-    # movements
+    # movements; also, we ignore acceleration because considering
+    # acceleration results in faster moves which *look* slower; it's
+    # better to just move in the shortest-path even if it's not the quickest
+    # path
     my $dist = sqrt($dx*$dx+$dy*$dy);
 
-    # velocity/acceleration for released vs grabbed
-    # XXX: make sure this matches steppers.ino if in doubt
-    my @maxvel = (4000, 4000);
-    my @maxacc = (20000, 10000);
-    my $vel = $maxvel[$grabbed];
-    my $acc = $maxvel[$grabbed];
-
-    # convert square distance into stepper motor steps, as that's the unit
-    # that maxvel/maxacc are in
-    $dist *= 480;
-
-    # find the distance required to reach maximum velocity
-    # (the distance to decelerate back to 0 again is equal)
-    # v^2 = u^2 + 2as
-    # u = 0, v^2=2as
-    # s = v^2/2a
-    my $accdist = ($vel*$vel)/(2*$acc);
-
-    # if we hit maximum velocity, then we have an acceleration phase,
-    # constant speed phase, then deceleration; otherwise, we only
-    # have constant acceleration followed by constant deceleration
-    #
-    # we want to return the amount of time taken for this movement,
-    # in the arbitrary units of maxvel/maxacc from above
-    if ($dist > $accdist*2) {
-        # s = ut + 1/2at^2
-        # u = 0, t^2 = 2s/a
-        # t = sqrt(2s/a)
-        my $acctime = sqrt((2*$accdist)/$acc);
-
-        # v = s/t, t = s/v
-        # we remain at max. velocity for a distance equal to the total distance
-        # moved, minus the acceleration distances
-        my $maxveltime = ($dist-$accdist*2)/$vel;
-
-        # total time taken is the time to accelerate to full speed, plus the
-        # time taken to travel at full speed, plus the time taken to
-        # decelerate to 0
-        return int(1000 * ($acctime + $maxveltime + $acctime));
-    } else {
-        # we're accelerating for the first half, then decelerating for the second
-        # half, so the distance we accelerate for is half the total distance
-        $accdist = $dist/2;
-
-        # s = ut + 1/2at^2
-        # u = 0, t^2 = 2s/a
-        # t = sqrt(2s/a)
-        my $acctime = sqrt((2*$accdist)/$acc);
-
-        # total time taken is the time to accelerate for half the distance,
-        # plus the time to decelerate for the other half of the distance
-        return int(1000 * $acctime * 2);
-    }
+    return int($dist*100);
 }
 
 # move the motors to (x, y) and wait until done
