@@ -10,7 +10,7 @@ use IO::Select;
 use Try::Tiny;
 use IPC::Run qw(start pump finish);
 
-my @stockfish = ('./stockfish_10_x64');
+my @stockfish = ('stockfish');
 my $in;
 my $out;
 
