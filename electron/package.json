@@ -1,0 +1,14 @@
+{
+  "name": "autopatzer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "electron ."
+  },
+  "author": "James Stanley",
+  "license": "WTFPL",
+  "devDependencies": {
+    "electron": "^8.2.1"
+  }
+}
