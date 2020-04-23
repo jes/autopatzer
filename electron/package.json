@@ -1,14 +1,30 @@
 {
   "name": "autopatzer",
-  "version": "1.0.0",
-  "description": "",
-  "main": "main.js",
-  "scripts": {
-    "test": "electron ."
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "electron": "^8.2.3",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.1"
   },
-  "author": "James Stanley",
-  "license": "WTFPL",
+  "main": "src/electron.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "server": "electron .",
+    "dev": "concurrently 'BROWSER=none yarn start' 'wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .'"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    "electron >= 8.2"
+  ],
   "devDependencies": {
-    "electron": "^8.2.1"
+    "concurrently": "^5.1.0",
+    "wait-on": "^4.0.2"
   }
 }
