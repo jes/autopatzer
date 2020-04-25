@@ -21,6 +21,13 @@ Message types are identified by the "op" field, which is present in all messages
 Upon receipt of a message we need to switch on "op" and then handle it accordingly.
 Messages which do not contain "op" are illegal.
 
+Implicit in this specification is that Mojolicious and the JS app are both synchronised
+with regards to where they are in the game state (i.e. that the board is in the starting
+position, and JS app joins lichess at the start of the game). If this condition is likely
+to be violated then we probably have more to do (e.g. just tell the user "please set up
+the pieces like this" with a diagram of the board, and then send FEN of the position
+to Mojo so that Mojo knows what the position is).
+
 ## Messages from web page to mojolicious
 
 ### Play move
