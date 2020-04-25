@@ -15,7 +15,7 @@ const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 480,
-        frame: true,
+        frame: false,
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
     })
