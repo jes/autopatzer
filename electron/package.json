@@ -7,7 +7,8 @@
     "electron": "^8.2.3",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "yarn": "^1.22.4"
   },
   "main": "src/electron.js",
   "homepage": "./",
