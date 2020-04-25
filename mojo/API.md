@@ -6,7 +6,7 @@ All messages are asynchronous.
 
 Game state is stored in the mojo daemon, we probably don't need the JS part
 to store game state. If we reach a point where we want JS to store game state
-we should consider whether it might just be easier to move host parts into
+we should consider whether it might just be easier to move those parts into
 mojolicious and add some websocket message types.
 
 Notably missing from this specification so far is any way for the JS part (and
