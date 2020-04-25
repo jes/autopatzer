@@ -1,0 +1,154 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Mojolicious::Lite;
+use Mojo::JSON qw(encode_json decode_json);
+use List::Util qw(shuffle);
+use Chess::Rep;
+use Try::Tiny;
+use Storable qw(dclone);
+
+websocket '/ws' => sub {
+    my $c = shift;
+
+    $c->inactivity_timeout(3600);
+
+    my $mymove = 0;
+    my $game = Chess::Rep->new;
+    my @timers;
+
+    $c->on(message => sub {
+        my ($c, $msg_str) = @_;
+        try {
+            my $msg = decode_json($msg_str);
+
+            if ($msg->{op} eq 'reset') {
+                Mojo::IOLoop->remove($_) for @timers;
+                $game = Chess::Rep->new;
+            } elsif ($msg->{op} eq 'play') {
+                $game->go_move($msg->{move});
+                $mymove = !$mymove;
+                return unless $mymove;
+
+                my $move = random_move($game);
+                my $newgame = dclone($game);
+                $newgame->go_move($move);
+                my $before = occupied($game);
+                my $after = occupied($newgame);
+                my ($lost,$gained) = changes($before, $after);
+
+                my @lostsofar;
+                my @gainedsofar;
+                my @messages;
+                while (@$lost || @$gained) {
+                    if ((rand > 0.5 && @$lost) || !@$gained) {
+                        push @lostsofar, shift @$lost;
+                    } else {
+                        push @gainedsofar, shift @$gained;
+                    }
+
+                    push @messages, {
+                        op => 'board',
+                        move => (@$lost+@$gained==0) ? $move : '',
+                        lost => [@lostsofar],
+                        gained => [@gainedsofar],
+                    };
+                }
+
+                push @messages, {op=>'button'};
+
+                Mojo::IOLoop->remove($_) for @timers;
+
+                for my $i (0..$#messages) {
+                    push @timers, Mojo::IOLoop->timer(2*($i+1) => sub {
+                        $c->send(encode_json($messages[$i]));
+                    });
+                }
+            } else {
+                $c->send(encode_json({op=>'error',error=>'No op specified.'}));
+            }
+        } catch {
+            warn "$_";
+            $c->send(encode_json({op=>'error',error=>$_}));
+        };
+    });
+};
+
+app->start;
+
+# return random legal move in SAN
+sub random_move {
+    my ($game) = @_;
+
+    my @moves = legal_moves($game);
+    my $m = $moves[rand @moves];
+
+    # convert to SAN
+    my $newgame = dclone($game);
+    return $newgame->go_move($m)->{san};
+}
+
+# return array of legal moves
+sub legal_moves {
+    my ($game) = @_;
+
+    my $player = $game->to_move ? 'w' : 'b';
+    my @moves = @{ $game->status->{moves} };
+    my @san_moves;
+
+    my @legal_moves;
+
+    for my $m (@moves) {
+        # XXX: why are these returned in uppercase when Chess::Rep doesn't accept uppercase??
+        my $from = lc Chess::Rep::get_field_id($m->{from});
+        my $to = lc Chess::Rep::get_field_id($m->{to});
+
+        if ($to =~ /[81]/ && ($game->get_piece_at($from) & 0x1)) {
+            $to .= 'q';
+        }
+
+        next if ($game->get_piece_at($from) & 0x1) && ($game->get_piece_at($to) & 0x1); # don't capture pawns
+
+        push @legal_moves, "$from-$to";
+    }
+
+    return sort { $a cmp $b } @legal_moves;
+}
+
+# return reference to array of occupied squares
+sub occupied {
+    my ($game) = @_;
+
+    my @occupied;
+
+    for my $rank (1..8) {
+        for my $file ('a'..'h') {
+            my $sqr = $file.$rank;
+            push @occupied, $sqr if $game->get_piece_at($sqr);
+        }
+    }
+
+    return \@occupied;
+}
+
+# return ($lost, $gained) arrayrefs
+sub changes {
+    my ($before, $after) = @_;
+
+    my %beforehas = map { $_=> 1 } @$before;
+    my %afterhas = map { $_=> 1 } @$after;
+
+    my @lost;
+    my @gained;
+
+    for my $k (keys %beforehas) {
+        push @lost, $k if !$afterhas{$k};
+    }
+    for my $k (keys %afterhas) {
+        push @gained, $k if !$beforehas{$k};
+    }
+
+    return ([shuffle @lost], [shuffle @gained]);
+}
