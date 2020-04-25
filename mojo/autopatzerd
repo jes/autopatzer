@@ -76,6 +76,10 @@ websocket '/ws' => sub {
     });
 };
 
+# XXX: listen on port 3001
+if (@ARGV == 1 && $ARGV[0] eq 'daemon') {
+    push @ARGV, '--listen', 'http://*:3001';
+}
 app->start;
 
 # return random legal move in SAN
