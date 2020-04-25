@@ -44,6 +44,17 @@ then also use this function to send the move to Mojo.
 Mojo won't know or care whether the local player is black or white, it's up to the JS app
 to just tell Mojo which moves to commit to, for both players.
 
+### Reset internal game state
+
+    {"op":"reset"}
+
+This tells Mojolicious app to reset its game state to the start of the game. It won't automatically
+reset the physical board (and it's not possible e.g. for captured pieces to be automatically
+returned to the starting position), so we probably also want a message telling the user to reset
+the board. Ideally the JS app would ask for the board to be reset *before* seeking another game,
+instead of after, otherwise the first move of the game will time out while the user is busy
+resetting the pieces.
+
 ## Messages from mojolicious to web page
 
 ### Report changes made on board
