@@ -22,7 +22,8 @@ sub new {
     open( $self->{fh}, '+<', $self->{device} )
         or die "can't open $self->{device}: $!\n";
 
-    $self->{game} = Chess::Rep->new;
+    $self->reset;
+
     $self->{ready} = 0;
     $self->{buf} = '';
     $self->{occupied} = {};
@@ -35,34 +36,16 @@ sub new {
     # consume & discard any pending data
     1 while $self->read(0);
 
-    # adjust the pieces??
-    my @adjusted;
-    $self->scan(1);
-    for my $x (1, 2, 7, 8) {
-        for my $y (1..8) {
-            my $sqr = XY2square($x,$y);
-            if (!$self->{occupied}{$sqr}) {
-                $self->adjust($sqr);
-                push @adjusted, $sqr;
-            }
-        }
-    }
-    if (@adjusted) {
-        usleep(100000); # let electromagnet turn off so that we can scan properly
-        $self->scan(1);
-        my $ok = 1;
-        for my $sqr (@adjusted) {
-            if (!$self->{occupied}{$sqr}) {
-                warn "fix $sqr\n";
-                $ok = 0;
-            }
-        }
-        die if !$ok;
-    }
-
     $self->{ready} = 1;
 
     return $self;
+}
+
+sub reset {
+    my ($self) = @_;
+
+    $self->{game} = Chess::Rep->new;
+    $self->{last_lifted} = undef;
 }
 
 sub read {
@@ -167,6 +150,7 @@ sub boardIsReset {
     my $sqrs = join(' ', sort keys %{ $self->{occupied} });
     return $sqrs eq 'a1 a2 a7 a8 b1 b2 b7 b8 c1 c2 c7 c8 d1 d2 d7 d8 e1 e2 e7 e8 f1 f2 f7 f8 g1 g2 g7 g8 h1 h2 h7 h8';
 }
+
 
 sub moveWithoutMotors {
     my ($self, $move) = @_;
