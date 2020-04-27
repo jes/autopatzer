@@ -11,6 +11,8 @@ use IPC::Open2;
 use Mojo::IOLoop::Stream;
 use Mojo::UserAgent;
 
+$| = 1;
+
 die "usage: stdio-websocket ws://localhost:3000/ws [COMMAND]\nRun COMMAND with stdin/stdout connceted to the websocket.\nConnects stdin/stdout directly to the websocket if COMMAND is not specified." if !@ARGV || $ARGV[0] =~ /^-/;
 
 my $websocket_url = shift @ARGV;

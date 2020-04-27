@@ -78,7 +78,7 @@ sub input_black {
     }
 }
 
-# return the position evaluation, in pawns
+# return the best move, in pawns
 sub stockfish_move {
     my ($game) = @_;
 

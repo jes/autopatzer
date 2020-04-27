@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+# Stockfish client to work with autopatzerd
+# Run with stdio-websocket:
+# $ ./stdio-websocket ws://localhost:3001/ws ./stockfish-client
+
+use strict;
+use warnings;
+
+use Chess::Rep;
+use IPC::Run qw(start pump finish);
+use JSON qw(encode_json decode_json);
+use Try::Tiny;
+
+$| = 1;
+
+my @stockfish = ('stockfish');
+my $in;
+my $out;
+
+my $h = start \@stockfish, \$in, \$out;
+
+my $game = Chess::Rep->new;
+
+my $savedmove;
+
+sendmsg({op => 'reset'});
+my $move = stockfish_move($game);
+$move = $game->go_move($move)->{san};
+sendmsg({op => 'play', move => $move});
+
+while (<>) {
+    chomp;
+    print STDERR "Read: $_\n";
+    try {
+        my $m = decode_json($_);
+        recvmsg($m);
+    } catch {
+        warn "$_";
+    };
+}
+
+sub sendmsg {
+    my ($m) = @_;
+
+    my $json = encode_json($m);
+
+    print STDERR "Send: $json\n";
+    print "$json\n";
+}
+
+sub recvmsg {
+    my ($m) = @_;
+
+    if ($m->{op} eq 'board') {
+        $savedmove = $m->{move};
+    } elsif ($m->{op} eq 'button') {
+        $game->go_move($savedmove);
+        sendmsg({op => 'play', move => $savedmove});
+        $savedmove = undef;
+        my $move = stockfish_move($game);
+        $move = $game->go_move($move)->{san};
+        sendmsg({op => 'play', move => $move});
+    }
+}
+
+# return the best move, in pawns
+sub stockfish_move {
+    my ($game) = @_;
+
+    my $fen = $game->get_fen;
+
+    $in = "position fen $fen\ngo depth 1\n";
+    pump $h while length $in;
+
+    pump $h until $out =~ /bestmove (\w+)/;
+    $out = '';
+
+    return $1;
+}
