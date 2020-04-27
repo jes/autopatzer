@@ -1,6 +1,6 @@
 # Autopatzer websocket API
 
-Connect with websocket to http://localhost:3001/ws
+Connect with websocket to ws://localhost:3001/ws
 
 All messages are asynchronous.
 
