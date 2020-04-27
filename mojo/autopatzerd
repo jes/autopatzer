@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use lib 'lib';
+
+use Autopatzer;
+use Mojolicious::Lite;
+use Mojo::JSON qw(encode_json decode_json);
+use Mojo::IOLoop::Stream;
+use Chess::Rep;
+use Try::Tiny;
+
+my @clients;
+
+my $ap = Autopatzer->new(
+    device => '/dev/ttyACM0',
+    cb => sub {
+        my ($self) = @_;
+        # TODO: check squares gained/lost relative to $self->{game} and:
+        $_->send(encode_json({op => 'board', lost => [], gained => [], move => ''})) for @clients;
+    },
+);
+
+# TODO: hook interrupt to the GPIO keyswitch and:
+# $_->send(encode_json({op => 'button'})) for @clients;
+# whenever the interrupt fires
+
+# use Mojo event loop to read lines from serial device
+my $ap_stream = Mojo::IOLoop::Stream->with_roles('+LineBuffer')->new($ap->{fh});
+$ap->watch_lines->on(read_line => sub {
+    my ($stream, $line) = @_;
+    $ap->handle_line($line);
+});
+
+websocket '/ws' => sub {
+    my $c = shift;
+
+    push @clients, $c;
+
+    $c->inactivity_timeout(3600);
+
+    # TODO: send the client an initial "board" message explaining the
+    # changes to the board, if any (i.e. lost/gained squares)
+
+    my @timers;
+    my $ping_timer = Mojo::IOLoop->recurring(60 => sub {
+        $c->send(encode_json(op => 'ping'));
+    });
+
+    $c->on(message => sub {
+        my ($c, $msg_str) = @_;
+        try {
+            my $msg = decode_json($msg_str);
+
+            if ($msg->{op} eq 'reset') {
+                Mojo::IOLoop->remove($_) for @timers;
+                $ap->reset;
+            } elsif ($msg->{op} eq 'play') {
+                $ap->moveWithMotors($msg->{move});
+            } elsif ($msg->{op} eq 'ping') {
+                # do nothing
+            } else {
+                $c->send(encode_json({op=>'error',error=>'No op specified.'}));
+            }
+        } catch {
+            warn "$_";
+            $c->send(encode_json({op=>'error',error=>$_}));
+        };
+    });
+
+    $c->on(finish => sub {
+        Mojo::IOLoop->remove($_) for (@timers, $ping_timer);
+        @clients = grep { $_ != $c } @clients;
+    });
+};
+
+# XXX: listen on port 3001
+if (@ARGV == 1 && $ARGV[0] eq 'daemon') {
+    push @ARGV, '--listen', 'http://*:3001';
+}
+
+app->start;
