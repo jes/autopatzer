@@ -55,6 +55,13 @@ the board. Ideally the JS app would ask for the board to be reset *before* seeki
 instead of after, otherwise the first move of the game will time out while the user is busy
 resetting the pieces.
 
+### Ping
+
+    {"op":"ping"}
+
+Just used to keep connection alive. Ignored by the server. The client does not need to send these,
+it should be enough for the server to do all the keeping alive.
+
 ## Messages from mojolicious to web page
 
 ### Report changes made on board
@@ -84,6 +91,14 @@ This means the button next to the screen has been pressed, which means the user 
 commit to a move. If it is the user's turn, then now is the time to send an "op":"play" message with
 the latest reported move. If it is not the user's turn then probably either do nothing or
 show "Not your turn". Do nothing is probably fine and easier.
+
+### Ping
+
+    {"op":"ping"}
+
+Just used to keep connection alive. Ignored by the client. The server needs to send these
+periodically to ensure the connection does not timeout in the event of a long think with
+nothing happening.
 
 ### Error
 
