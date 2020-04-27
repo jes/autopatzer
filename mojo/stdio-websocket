@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# Connect a websocket to stdin/stdout of a child process
+# Useful for writing isopath AIs without having to deal with websockets
+# jes 2018
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use IPC::Open2;
+use Mojo::IOLoop::Stream;
+use Mojo::UserAgent;
+
+die "usage: stdio-websocket ws://localhost:3000/ws [COMMAND]\nRun COMMAND with stdin/stdout connceted to the websocket.\nConnects stdin/stdout directly to the websocket if COMMAND is not specified." if !@ARGV || $ARGV[0] =~ /^-/;
+
+my $websocket_url = shift @ARGV;
+
+my ($chld_out, $chld_in);
+
+if (@ARGV) {
+    # spawn the child process using all remaining command-line args
+    my $pid = open2($chld_out, $chld_in, @ARGV);
+} else {
+    # connect to our STDIN and STDOUT
+    $chld_out = \*STDIN;
+    $chld_in = \*STDOUT;
+}
+
+my $websocket;
+my $buffered_output = '';
+
+sub send_lines {
+    return if !$websocket;
+
+    while ($buffered_output =~ s/^([^\n]*)\n//) {
+        $websocket->send($1);
+    }
+}
+
+my $chld_out_stream = Mojo::IOLoop::Stream->new($chld_out);
+$chld_out_stream->on(read => sub {
+    my ($stream, $read) = @_;
+
+    $buffered_output .= $read;
+    send_lines();
+});
+$chld_out_stream->on(close => sub {
+    exit 0;
+});
+$chld_out_stream->on(error => sub {
+    my ($stream, $err) = @_;
+    print STDERR "child stdout: $err\n";
+    exit 1;
+});
+$chld_out_stream->timeout(0);
+$chld_out_stream->start;
+
+# connect to the websocket
+my $ua = Mojo::UserAgent->new();
+$ua->inactivity_timeout(600);
+$ua->websocket($websocket_url, sub {
+    my ($ua, $tx) = @_;
+
+    if (!$tx->is_websocket) {
+        print STDERR "websocket connection unsuccessful\n";
+        exit 1;
+    }
+
+    $websocket = $tx;
+    send_lines();
+
+    $tx->on(finish => sub {
+        my ($tx, $code) = @_;
+        print STDERR "websocket disconnected ($code)\n";
+        exit 1;
+    });
+    $tx->on(message => sub {
+        my ($tx, $msg) = @_;
+        print $chld_in "$msg\n";
+    });
+});
+
+Mojo::IOLoop->recurring(60 => sub {
+    return if !$websocket;
+    $websocket->send('{"op":"ping"}');
+});
+
+Mojo::IOLoop->start;
