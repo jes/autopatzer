@@ -63,39 +63,44 @@ sub read {
         my $line = $1;
         $line =~ s/[\r\n]//gm;
         print "[[$line]]\n";
-
-        warn "error from board: $line\n" if $line =~ /error/;
-
-        delete $self->{look_for} if $self->{look_for} && $line =~ /$self->{look_for}/;
-
-        if ($line =~ /^piece(up|down) (..)/) {
-            my $up = $1 eq 'up' ? 1 : 0;
-            my $sqr = $2;
-            print "Piece $up on $sqr\n";
-            if ($up) {
-                delete $self->{occupied}{$sqr};
-            } else {
-                $self->{occupied}{$sqr} = 1;
-            }
-
-            # remember which piece belonging to the non-moving player was last lifted, so
-            # that we have a chance of guessing which square a capture was made on
-            my $remember_white = !($self->{game}->to_move);
-            my $is_white = !!($self->{game}->get_piece_at($sqr) & 0x80);
-            if ($up && ($remember_white == $is_white)) {
-                $self->{last_lifted} = $sqr;
-            }
-        }
-
-        if ($line =~ /^occupied: (.*)$/) {
-            my @squares = split / /, $1;
-            $self->{occupied} = +{ map { $_ => 1 } @squares };
-        }
-
-        $self->{cb}->($self) if $self->{cb} && $self->{ready};
+        $self->handle_line($line);
     }
 
     return 1;
+}
+
+sub handle_line {
+    my ($self, $line) = @_;
+
+    warn "error from board: $line\n" if $line =~ /error/;
+
+    delete $self->{look_for} if $self->{look_for} && $line =~ /$self->{look_for}/;
+
+    if ($line =~ /^piece(up|down) (..)/) {
+        my $up = $1 eq 'up' ? 1 : 0;
+        my $sqr = $2;
+        print "Piece $up on $sqr\n";
+        if ($up) {
+            delete $self->{occupied}{$sqr};
+        } else {
+            $self->{occupied}{$sqr} = 1;
+        }
+
+        # remember which piece belonging to the non-moving player was last lifted, so
+        # that we have a chance of guessing which square a capture was made on
+        my $remember_white = !($self->{game}->to_move);
+        my $is_white = !!($self->{game}->get_piece_at($sqr) & 0x80);
+        if ($up && ($remember_white == $is_white)) {
+            $self->{last_lifted} = $sqr;
+        }
+    }
+
+    if ($line =~ /^occupied: (.*)$/) {
+        my @squares = split / /, $1;
+        $self->{occupied} = +{ map { $_ => 1 } @squares };
+    }
+
+    $self->{cb}->($self) if $self->{cb} && $self->{ready};
 }
 
 sub adjust {
