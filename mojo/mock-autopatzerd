@@ -19,6 +19,10 @@ websocket '/ws' => sub {
     my $game = Chess::Rep->new;
     my @timers;
 
+    Mojo::IOLoop->recurring(60 => sub {
+        $c->send(encode_json(op => 'ping'));
+    });
+
     $c->on(message => sub {
         my ($c, $msg_str) = @_;
         try {
@@ -66,8 +70,11 @@ websocket '/ws' => sub {
                         $c->send(encode_json($messages[$i]));
                     });
                 }
+            } elsif ($msg->{op} eq 'ping') {
+                # do nothing
             } else {
-                $c->send(encode_json({op=>'error',error=>'No op specified.'}));
+                my $op = $msg->{op} || '[undef]';
+                $c->send(encode_json({op=>'error',error=>"Don't recognise op: $op"}));
             }
         } catch {
             warn "$_";
