@@ -1,48 +1,40 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
+import chunk from "lodash/chunk";
 
-import { makeStyles } from "@material-ui/core/styles";
-
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-
-import Box from "@material-ui/core/Box";
-import PlayerColour from "./PlayerColour";
-
-const useStyles = makeStyles((theme) => ({
-  icon: {
-    color: "black",
-  },
-}));
+import { Container, List, ListItem, Box } from "@material-ui/core";
+import ScrollableFeed from "react-scrollable-feed";
 
 const Moves = ({ moves }) => {
-  const classes = useStyles();
-
-  const movesListItems = moves.map((move, index) => (
-    <ListItem key={move} selected={index % 2 === 0 ? false : true}>
-      <Box
-        display="inline"
-        fontWeight="fontWeightMedium"
-        fontSize={10}
-        color="text.disabled"
-        minWidth={20}
-        textAlign="right"
-        mr={2}
-      >
-        {index + 1}
-      </Box>
-      <Box className={classes.icon} mr={1} display="flex" alignItems="center">
-        <PlayerColour colour={index % 2 === 0 ? "white" : "black"} />
-      </Box>
-      <Box display="inline" fontFamily="Monospace" fontSize={16}>
-        {move}
-      </Box>
-    </ListItem>
-  ));
+  const movesListItems = chunk(moves, 2).map((move, index) => {
+    move = move.join(" ");
+    return (
+      <ListItem key={move}>
+        <Box
+          display="inline"
+          fontWeight="fontWeightMedium"
+          fontSize={13}
+          color="text.disabled"
+          minWidth={20}
+          textAlign="right"
+          mr={2}
+        >
+          {index + 1}
+        </Box>
+        <Box display="inline" fontFamily="Monospace" fontSize={16}>
+          {move}
+        </Box>
+      </ListItem>
+    );
+  });
 
   return (
-    <Box border={1} overflow="auto" height="300px">
-      <List disablePadding={true}>{movesListItems}</List>
-    </Box>
+    <Container>
+      <Box m={2} height="280px" overflow="auto" border={1}>
+        <ScrollableFeed forceScroll={true}>
+          <List disablePadding={true}>{movesListItems}</List>
+        </ScrollableFeed>
+      </Box>
+    </Container>
   );
 };
 

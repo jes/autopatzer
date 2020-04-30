@@ -3,8 +3,6 @@ import ndjsonStream from "can-ndjson-stream";
 const lichessApiEndpoint = process.env.REACT_APP_API_PREFIX;
 const lichessApiToken = process.env.REACT_APP_API_KEY;
 
-console.log(lichessApiEndpoint);
-
 const handleErrors = (response) => {
   if (!response.ok) {
     throw Error(response); // Make this betterer
@@ -31,6 +29,18 @@ export const challengeAI = (level) => {
 
 export const getNowPlaying = () => {
   return fetch(`${lichessApiEndpoint}/account/playing`, {
+    headers: {
+      Authorization: `Bearer ${lichessApiToken}`,
+    },
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return response.json();
+    });
+};
+
+export const getProfile = () => {
+  return fetch(`${lichessApiEndpoint}/account`, {
     headers: {
       Authorization: `Bearer ${lichessApiToken}`,
     },

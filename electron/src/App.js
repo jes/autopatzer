@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Container from "@material-ui/core/Container";
 import Modal from "@material-ui/core/Modal";
 import Button from "@material-ui/core/Button";
@@ -8,6 +8,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import "./App.css";
 import StartGame from "./StartGame";
 import Game from "./Game";
+
+import { getProfile } from "./lichess";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -29,6 +31,7 @@ const App = () => {
   const classes = useStyles();
 
   const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState(null);
   const [gameId, setGameId] = useState(null);
 
   const handleOpen = () => setOpen(true);
@@ -39,6 +42,12 @@ const App = () => {
     setGameId(gameId);
     handleClose();
   };
+
+  useEffect(() => {
+    getProfile().then((profile) => {
+      setUserId(profile.id);
+    });
+  }, []);
 
   return (
     <div className="App">
@@ -63,7 +72,7 @@ const App = () => {
             <StartGame startNewGame={startNewGame} />
           </div>
         </Modal> */}
-        <Game gameId={"H2mdWHFg"} />
+        {userId && <Game userId={userId} gameId={"wqAnxR7V"} />}
       </Container>
     </div>
   );
