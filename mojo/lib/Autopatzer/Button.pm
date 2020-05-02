@@ -22,7 +22,7 @@ sub new {
     # XXX: use gpiomon instead of RPi::Pin to monitor the interrupt
     # because RPi::Pin causes segfaults
     open ($self->{fh}, '-|', "./gpiomon $self->{pin}")
-        or die "can't run gpionmon: $!";
+        or die "can't run gpiomon: $!";
     $self->{handle} = AnyEvent::Handle->new(
         fh => $self->{fh},
         on_read => sub {
