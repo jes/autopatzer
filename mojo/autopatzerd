@@ -6,6 +6,7 @@ use warnings;
 use lib 'lib';
 
 use Autopatzer;
+use Autopatzer::Button;
 use Mojolicious::Lite;
 use Mojo::JSON qw(encode_json decode_json);
 use Mojo::IOLoop::Stream;
@@ -23,13 +24,17 @@ my $ap = Autopatzer->new(
     },
 );
 
-# TODO: hook interrupt to the GPIO keyswitch and:
-# $_->send(encode_json({op => 'button'})) for @clients;
-# whenever the interrupt fires
+my $button = Autopatzer::Button->new(
+    pin => 21, # physical pin 40, BCM pin 21, WiringPi pin 29
+    cb => sub {
+        print "BUTTON PRESS!\n";
+        $_->send(encode_json({op => 'button'})) for @clients;
+    },
+);
 
 # use Mojo event loop to read lines from serial device
 my $ap_stream = Mojo::IOLoop::Stream->with_roles('+LineBuffer')->new($ap->{fh});
-$ap->watch_lines->on(read_line => sub {
+$ap_stream->watch_lines->on(read_line => sub {
     my ($stream, $line) = @_;
     $ap->handle_line($line);
 });
