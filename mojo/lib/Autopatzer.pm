@@ -57,7 +57,17 @@ sub read {
     my @ready = IO::Select->new($self->{fh})->can_read($timeout);
     return 0 unless @ready;
 
-    sysread($self->{fh}, $self->{buf}, 1024, length($self->{buf}));
+    my $data;
+    sysread($self->{fh}, $data, 1024, 0);
+    $self->handle_data($data);
+
+    return 1;
+}
+
+sub handle_data {
+    my ($self, $data) = @_;
+
+    $self->{buf} .= $data;
 
     while ($self->{buf} =~ s/^(.*?\n)//m) {
         my $line = $1;
@@ -65,8 +75,6 @@ sub read {
         print "[[$line]]\n";
         $self->handle_line($line);
     }
-
-    return 1;
 }
 
 sub handle_line {

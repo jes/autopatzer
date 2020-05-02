@@ -5,11 +5,13 @@ use warnings;
 
 use lib 'lib';
 
+use EV; # we need to use EV in order for AnyEvent and Mojolicious to play nicely together
+use AnyEvent;
+use AnyEvent::Handle;
 use Autopatzer;
 use Autopatzer::Button;
 use Mojolicious::Lite;
 use Mojo::JSON qw(encode_json decode_json);
-use Mojo::IOLoop::Stream;
 use Chess::Rep;
 use Try::Tiny;
 
@@ -32,12 +34,15 @@ my $button = Autopatzer::Button->new(
     },
 );
 
-# use Mojo event loop to read lines from serial device
-my $ap_stream = Mojo::IOLoop::Stream->with_roles('+LineBuffer')->new($ap->{fh});
-$ap_stream->watch_lines->on(read_line => sub {
-    my ($stream, $line) = @_;
-    $ap->handle_line($line);
-});
+# use AnyEvent to read lines from serial device
+my $handle = AnyEvent::Handle->new(
+    fh => $ap->{fh},
+    on_read => sub {
+        my ($handle) = @_;
+        my $data = substr($handle->rbuf, 0, length($handle->rbuf), '');
+        $ap->handle_data($data);
+    },
+);
 
 websocket '/ws' => sub {
     my $c = shift;
