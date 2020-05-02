@@ -44,6 +44,8 @@ my $handle = AnyEvent::Handle->new(
     },
 );
 
+# TODO: move most of this into Autopatzer.pm and just get $ap->changes or something,
+# also use same in moveShown instead of duplicating it
 sub send_changes {
     my @lost;
     my @gained;
