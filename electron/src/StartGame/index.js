@@ -66,7 +66,7 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
       gamesInProgress.map((g) => g.gameId),
       startNewGame
     );
-  }, [startNewGame]);
+  }, [gamesInProgress, startNewGame]);
 
   return (
     <Grid container spacing={2}>

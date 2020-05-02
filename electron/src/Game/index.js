@@ -41,7 +41,7 @@ const getEndTimes = (white, black) => {
 };
 
 const whoseTurn = (moves) => {
-  return moves.length % 2 == 0 ? "white" : "black";
+  return moves.length % 2 === 0 ? "white" : "black";
 };
 
 const isTicking = (moves, colour) => {
@@ -112,7 +112,7 @@ const Game = ({ myProfile, gameId }) => {
         })
       );
     });
-  }, [gameId]);
+  }, [myProfile, gameId]);
 
   return (
     <Container>
