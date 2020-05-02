@@ -6,7 +6,11 @@ import signal
 import sys
 import RPi.GPIO as GPIO
 
-BUTTON_GPIO = 21
+if len(sys.argv) < 2:
+    print("Usage: gpiomon PIN\nWhere PIN is a BCM pin number.")
+    sys.exit()
+
+BUTTON_GPIO = int(sys.argv[1])
 
 def signal_handler(sig, frame):
     GPIO.cleanup()

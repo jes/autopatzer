@@ -15,11 +15,13 @@ sub new {
 
     my $self = bless \%opts, $pkg;
 
+    $self->{pin} = int($self->{pin});
+
     $self->{rpi_pin} = RPi::Pin->new($self->{pin});
 
     # XXX: use gpiomon instead of RPi::Pin to monitor the interrupt
     # because RPi::Pin causes segfaults
-    open ($self->{fh}, '-|', './gpiomon')
+    open ($self->{fh}, '-|', "./gpiomon $self->{pin}")
         or die "can't run gpionmon: $!";
     $self->{handle} = AnyEvent::Handle->new(
         fh => $self->{fh},
