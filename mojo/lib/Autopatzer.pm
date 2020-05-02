@@ -36,6 +36,8 @@ sub new {
     # consume & discard any pending data
     1 while $self->read(0);
 
+    $self->scan(1);
+
     $self->{ready} = 1;
 
     return $self;
@@ -143,7 +145,7 @@ sub blockUntil {
     $self->{look_for} = $keyword;
     $self->read while $self->{look_for};
     $self->{ready} = 1;
-    $self->{cb}->($self) if $self->{cb};
+    $self->{cb}->($self) if $self->{cb} && $self->{ready};
 }
 
 sub scan {
@@ -227,6 +229,8 @@ sub moveWithMotors {
 # TODO: refactor this into several functions, and probably move into Autopatzer::Routing or something
 sub movePiece {
     my ($self, $from, $to) = @_;
+
+    return if $to ne 'xx' && $self->{game}->get_piece_at($to);
 
     my ($fromx,$fromy) = square2XY($from);
     my ($tox,$toy) = (-1, -1);

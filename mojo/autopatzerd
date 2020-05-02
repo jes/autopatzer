@@ -14,6 +14,7 @@ use Mojolicious::Lite;
 use Mojo::JSON qw(encode_json decode_json);
 use Chess::Rep;
 use Try::Tiny;
+use Storable qw(dclone);
 
 my @clients;
 
@@ -21,8 +22,7 @@ my $ap = Autopatzer->new(
     device => '/dev/ttyACM0',
     cb => sub {
         my ($self) = @_;
-        # TODO: check squares gained/lost relative to $self->{game} and:
-        $_->send(encode_json({op => 'board', lost => [], gained => [], move => ''})) for @clients;
+        send_changes();
     },
 );
 
@@ -44,6 +44,34 @@ my $handle = AnyEvent::Handle->new(
     },
 );
 
+sub send_changes {
+    my @lost;
+    my @gained;
+    my $move = '';
+
+    return if !$ap;
+
+    try {
+        my $maybemove = $ap->moveShown;
+        $move = dclone($ap->{game})->go_move($maybemove)->{san} if $maybemove;
+    } catch {
+        warn "$_" unless $_ =~ /Illegal move/;
+    };
+
+    for my $rank (1..8) {
+        for my $file ('a'..'h') {
+            my $sqr = "$file$rank";
+            if ($ap->{occupied}{$sqr} && !$ap->{game}->get_piece_at($sqr)) {
+                push @gained, $sqr;
+            } elsif ($ap->{game}->get_piece_at($sqr) && !$ap->{occupied}{$sqr}) {
+                push @lost, $sqr;
+            }
+        }
+    }
+
+    $_->send(encode_json({op => 'board', lost => \@lost, gained => \@gained, move => $move})) for @clients;
+}
+
 websocket '/ws' => sub {
     my $c = shift;
 
@@ -51,8 +79,10 @@ websocket '/ws' => sub {
 
     $c->inactivity_timeout(3600);
 
-    # TODO: send the client an initial "board" message explaining the
+    # send the client an initial "board" message explaining the
     # changes to the board, if any (i.e. lost/gained squares)
+    # (this goes to all clients but we don't care)
+    send_changes();
 
     my @timers;
     my $ping_timer = Mojo::IOLoop->recurring(60 => sub {
