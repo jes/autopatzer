@@ -230,7 +230,7 @@ sub moveWithMotors {
 sub movePiece {
     my ($self, $from, $to) = @_;
 
-    return if $to ne 'xx' && $self->{game}->get_piece_at($to);
+    return if $to ne 'xx' && $self->{occupied}{$to};
 
     my ($fromx,$fromy) = square2XY($from);
     my ($tox,$toy) = (-1, -1);
