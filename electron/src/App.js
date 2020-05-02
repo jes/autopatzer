@@ -5,11 +5,18 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import Box from "@material-ui/core/Box";
+
 import "./App.css";
 import StartGame from "./StartGame";
 import Game from "./Game";
+import PlayerColour from "./Game/components/PlayerColour";
 
-import { getProfile } from "./lichess";
+import { getProfile, getNowPlaying } from "./lichess";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -25,54 +32,99 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: theme.shadows[5],
     padding: theme.spacing(2, 4, 3),
   },
+
+  icon: {
+    color: "#000",
+  },
 }));
 
 const App = () => {
   const classes = useStyles();
 
-  const [open, setOpen] = useState(false);
-  const [userId, setUserId] = useState(null);
   const [gameId, setGameId] = useState(null);
+  const [myProfile, setMyProfile] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [gamesInProgress, setGamesInProgress] = useState([]);
 
-  const handleOpen = () => setOpen(true);
-
-  const handleClose = () => setOpen(false);
-
-  const startNewGame = (gameId) => {
-    setGameId(gameId);
-    handleClose();
-  };
+  const handleModalOpen = () => setModalOpen(true);
+  const handleModalClose = () => setModalOpen(false);
 
   useEffect(() => {
     getProfile().then((profile) => {
-      setUserId(profile.id);
+      setMyProfile(profile);
     });
   }, []);
+
+  useEffect(() => {
+    getNowPlaying().then(({ nowPlaying }) => {
+      setGamesInProgress(nowPlaying);
+    });
+  }, []);
+
+  const startNewGame = (gameId) => {
+    setGameId(gameId);
+    if (modalOpen) {
+      handleModalClose();
+    }
+  };
+
+  const inProgressGamesList = gamesInProgress.map((g) => {
+    const matchString = `${g.isMyTurn ? "Your" : "Their"} move in ${
+      g.variant.name
+    } (${g.speed}) against ${g.opponent.username}`;
+    return (
+      <ListItem
+        button
+        onClick={() => {
+          startNewGame(g.gameId);
+        }}
+        key={g.gameId}
+      >
+        <ListItemIcon className={classes.icon}>
+          <PlayerColour colour={g.color} />
+        </ListItemIcon>
+        <ListItemText primary={matchString}></ListItemText>
+      </ListItem>
+    );
+  });
 
   return (
     <div className="App">
       <Container>
-        {/* <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth={true}
-              onClick={handleOpen}
-            >
-              Find a Game
-            </Button>
+        {!gameId && (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box textAlign="center" fontWeight="fontWeightBold">
+                Games In-Progress
+              </Box>
+              <List>{gamesInProgress && inProgressGamesList}</List>
+            </Grid>
+            <Grid item xs={12}>
+              <Box textAlign="center" fontWeight="fontWeightBold">
+                OR
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth={true}
+                onClick={handleModalOpen}
+              >
+                Find a New Game
+              </Button>
+            </Grid>
           </Grid>
-          <Grid item xs={12}>
-            {gameId}
-          </Grid>
-        </Grid>
-        <Modal open={open} onClose={handleClose}>
+        )}
+        <Modal open={modalOpen} onClose={handleModalClose}>
           <div className={classes.paper}>
-            <StartGame startNewGame={startNewGame} />
+            <StartGame
+              gamesInProgress={gamesInProgress}
+              startNewGame={startNewGame}
+            />
           </div>
-        </Modal> */}
-        {userId && <Game userId={userId} gameId={"wqAnxR7V"} />}
+        </Modal>
+        {myProfile && gameId && <Game myProfile={myProfile} gameId={gameId} />}
       </Container>
     </div>
   );

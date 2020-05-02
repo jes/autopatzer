@@ -9,7 +9,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
-import { challengeAI, getNowPlaying, getEventStream } from "../lichess";
+import { challengeAI, getEventStream } from "../lichess";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -30,14 +30,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const StartGame = ({ startNewGame }) => {
+const StartGame = ({ gamesInProgress, startNewGame }) => {
   const classes = useStyles();
   const [time, setTime] = useState("10+0");
   const [rating, setRating] = useState("800-1000");
   const [colour, setColour] = useState("R");
   const [findingGame, setFindingGame] = useState(false);
 
-  const getNewGameId = (inProgress, startNewGame) => {
+  const getNewGameId = (gamesInProgress, startNewGame) => {
     getEventStream().then((stream) => {
       let read;
       const reader = stream.getReader();
@@ -48,7 +48,7 @@ const StartGame = ({ startNewGame }) => {
           }
 
           if (value.type && value.type === "gameStart") {
-            if (!inProgress.includes(value.game.id)) {
+            if (!gamesInProgress.includes(value.game.id)) {
               reader.cancel(`Got gameId ${value.game.id}`);
               setFindingGame(false);
               startNewGame(value.game.id);
@@ -62,12 +62,10 @@ const StartGame = ({ startNewGame }) => {
   };
 
   useEffect(() => {
-    getNowPlaying().then(({ nowPlaying }) => {
-      const inProgress = nowPlaying.map((g) => {
-        return g.gameId;
-      });
-      getNewGameId(inProgress, startNewGame);
-    });
+    getNewGameId(
+      gamesInProgress.map((g) => g.gameId),
+      startNewGame
+    );
   }, [startNewGame]);
 
   return (

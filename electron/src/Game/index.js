@@ -62,7 +62,7 @@ const convertToPgn = (moves) => {
   return chess.history();
 };
 
-const Game = ({ userId, gameId }) => {
+const Game = ({ myProfile, gameId }) => {
   const [state, setState] = useState({
     players: null,
     moves: null,
@@ -88,7 +88,7 @@ const Game = ({ userId, gameId }) => {
             case "gameFull":
               setState({
                 players: transformPlayerDetails(
-                  userId,
+                  myProfile.id,
                   value.white,
                   value.black
                 ),
