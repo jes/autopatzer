@@ -30,7 +30,7 @@ sub new {
 
     $self->{router} = Autopatzer::Router->new(
         grabbedCost => 1.5,
-        releaseCost => 1,
+        releasedCost => 1,
     );
 
     # we don't actually know motor positions yet, but it's only going to be used for shortest path computation anyway,
