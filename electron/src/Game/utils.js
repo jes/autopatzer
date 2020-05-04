@@ -1,7 +1,7 @@
 import Chess from "chess.js";
 import moment from "moment";
 
-export const playerOrder = ["me", "opponent"];
+export const playerOrder = ["white", "black"];
 
 export const loadPGN = (moves) => {
   const board = new Chess();
@@ -16,23 +16,22 @@ export const moveToUCI = (board, move) => {
 };
 
 export const transformPlayerDetails = (myUserId, white, black) => {
-  white.colour = "white";
-  black.colour = "black";
-
-  let players = [white, black];
-
-  players.forEach((player) => {
-    player.id === myUserId
-      ? (player.opponent = false)
-      : (player.opponent = true);
-  });
-
-  const p = {
-    me: players.find((p) => !p.opponent),
-    opponent: players.find((p) => p.opponent),
+  white = {
+    ...white,
+    colour: "white",
+    opponent: white.id === myUserId ? false : true,
   };
 
-  return p;
+  black = {
+    ...black,
+    colour: "black",
+    opponent: black.id === myUserId ? false : true,
+  };
+
+  return {
+    white: white,
+    black: black,
+  };
 };
 
 export const getEndTimes = (white, black) => {

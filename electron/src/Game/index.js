@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Chess from "chess.js";
 
-import { Container, Grid } from "@material-ui/core";
+import { Container, Grid, Box } from "@material-ui/core";
 
-import Player from "./components/Player";
+import PlayerDetails from "./components/PlayerDetails";
 import Moves from "./components/Moves";
 import ConfirmMove from "./components/ConfirmMove";
 import Timer from "./components/Timer";
@@ -34,6 +34,11 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
   const [autopatzerdMove, setAutopatzerdMove] = useState({
     move: "",
     confirmed: false,
+  });
+
+  const [boardChanges, setBoardChanges] = useState({
+    gained: [],
+    lost: [],
   });
 
   const [state, setState] = useState({
@@ -71,18 +76,31 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     switch (message.op) {
       case "board":
         console.log("Board update from autopatzerd: ", message);
-        if (message.move) {
+        if (!message.move.length) {
+          setAutopatzerdMove({
+            move: "",
+            confirmed: false,
+          });
+        } else {
           setAutopatzerdMove({
             ...autopatzerdMove,
             move: message.move,
           });
         }
+        setBoardChanges({
+          gained: message.gained,
+          lost: message.lost,
+        });
         break;
       case "button":
         console.log("Button press from autopatzerd: ", message);
         setAutopatzerdMove({
           ...autopatzerdMove,
           confirmed: true,
+        });
+        setBoardChanges({
+          gained: [],
+          lost: [],
         });
         break;
       case "error":
@@ -134,7 +152,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         }
       );
     }
-  }, [autopatzerdMove]);
+  }, [autopatzerdMove, gameId]);
 
   useEffect(() => {
     getBoardEventStream(gameId).then((stream) => {
@@ -156,7 +174,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         })
       );
     });
-  }, []);
+  }, [gameId]);
 
   return (
     <Container>
@@ -164,15 +182,15 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         <Grid item xs={6}>
           <Grid item xs={12} key={playerOrder[0]}>
             {state.players && (
-              <Player details={state.players[playerOrder[0]]} />
+              <PlayerDetails details={state.players[playerOrder[0]]} />
             )}
           </Grid>
           <Grid item xs={12} key={playerOrder[0]}>
             {state.timers && (
               <Timer
                 board={state.board}
-                colour={state.players[playerOrder[0]].colour}
-                endTime={state.timers[state.players[playerOrder[0]].colour]}
+                colour={playerOrder[0]}
+                endTime={state.timers[playerOrder[0]]}
               />
             )}
           </Grid>
@@ -191,16 +209,36 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         <Grid item xs={6}>
           <Grid item xs={12} key={playerOrder[1]}>
             {state.players && (
-              <Player details={state.players[playerOrder[1]]} />
+              <PlayerDetails details={state.players[playerOrder[1]]} />
             )}
           </Grid>
           <Grid item xs={12} key={playerOrder[1]}>
             {state.timers && (
               <Timer
                 board={state.board}
-                colour={state.players[playerOrder[1]].colour}
-                endTime={state.timers[state.players[playerOrder[1]].colour]}
+                colour={playerOrder[1]}
+                endTime={state.timers[playerOrder[1]]}
               />
+            )}
+          </Grid>
+          <Grid item xs={12}>
+            {boardChanges.gained.length != 0 && (
+              <Container>
+                <Box m={2} align="center" text-align="center" color="green">
+                  Gained:
+                  {boardChanges.gained.join(", ")}
+                </Box>
+              </Container>
+            )}
+          </Grid>
+          <Grid item xs={12}>
+            {boardChanges.lost.length != 0 && (
+              <Container>
+                <Box m={2} align="center" text-align="center" color="red">
+                  Lost:
+                  {boardChanges.lost.join(", ")}
+                </Box>
+              </Container>
             )}
           </Grid>
         </Grid>

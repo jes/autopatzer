@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 
 import Countdown from "react-countdown";
 
@@ -7,7 +7,7 @@ import { Box, Container } from "@material-ui/core";
 const Timer = ({ board, colour, endTime }) => {
   const counter = useRef();
 
-  const isTicking = () => {
+  const isTicking = useCallback(() => {
     if (board.history().length <= 2) {
       return false;
     }
@@ -17,7 +17,7 @@ const Timer = ({ board, colour, endTime }) => {
     }
 
     return false;
-  };
+  }, [board, colour]);
 
   useEffect(() => {
     if (isTicking()) {
@@ -25,7 +25,7 @@ const Timer = ({ board, colour, endTime }) => {
     } else {
       counter.current.api.pause();
     }
-  }, [counter, board, colour, endTime]);
+  }, [counter, board, colour, isTicking]);
 
   return (
     <Container>

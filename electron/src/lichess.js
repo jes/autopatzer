@@ -32,6 +32,19 @@ export const challengeAI = (level) => {
     });
 };
 
+export const getPlayerStatus = (user) => {
+  var queryParams = new URLSearchParams();
+  queryParams.append("ids", user);
+
+  return fetch(`${lichessApiEndpoint}/users/status?${queryParams.toString()}`, {
+    headers: headers,
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return response.json();
+    });
+};
+
 export const getNowPlaying = () => {
   return fetch(`${lichessApiEndpoint}/account/playing`, {
     headers: headers,

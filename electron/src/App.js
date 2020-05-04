@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from "react";
-import Container from "@material-ui/core/Container";
-import Modal from "@material-ui/core/Modal";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
-import { makeStyles } from "@material-ui/core/styles";
+import {
+  Container,
+  Modal,
+  Button,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
+  Box,
+} from "@material-ui/core";
 
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import Box from "@material-ui/core/Box";
+import { makeStyles } from "@material-ui/core/styles";
 
 import "./App.css";
 import StartGame from "./StartGame";
 import Game from "./Game";
-import PlayerColour from "./Game/components/PlayerColour";
-
 import { getProfile, getNowPlaying } from "./lichess";
 
 const useStyles = makeStyles((theme) => ({
@@ -31,10 +30,6 @@ const useStyles = makeStyles((theme) => ({
     border: "2px solid #000",
     boxShadow: theme.shadows[5],
     padding: theme.spacing(2, 4, 3),
-  },
-
-  icon: {
-    color: "#000",
   },
 }));
 
@@ -70,8 +65,8 @@ const App = () => {
     }
   };
 
-  const inProgressGamesList = gamesInProgress.map((g) => {
-    const matchString = `${g.isMyTurn ? "Your" : "Their"} move in ${
+  const inProgressGamesList = gamesInProgress.map((g, index) => {
+    const matchString = `${index}. ${g.isMyTurn ? "Your" : "Their"} move in ${
       g.variant.name
     } (${g.speed}) against ${g.opponent.username} (${g.gameId})`;
     return (
@@ -82,9 +77,6 @@ const App = () => {
         }}
         key={g.gameId}
       >
-        <ListItemIcon className={classes.icon}>
-          <PlayerColour colour={g.color} />
-        </ListItemIcon>
         <ListItemText primary={matchString}></ListItemText>
       </ListItem>
     );
