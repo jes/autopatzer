@@ -231,6 +231,7 @@ sub movePiece {
     my ($self, $from, $to) = @_;
 
     return if $to ne 'xx' && $self->{occupied}{$to};
+    return if !$self->{occupied}{$from};
 
     my ($fromx,$fromy) = square2XY($from);
     my ($tox,$toy) = (-1, -1);
@@ -321,7 +322,6 @@ sub movePiece {
             last;
         }
 
-        #  - [release magnet, move to the piece, grab magnet, ]move the piece in a straight/diagonal line to the centre of an unoccupied square;
         my @xdir = (-1, -1, 0, 1, 1, 1, 0, -1);
         my @ydir = (0, -1, -1, -1, 0, 1, 1, 1);
         for my $dir (0..7) {
