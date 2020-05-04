@@ -3,6 +3,10 @@ import ndjsonStream from "can-ndjson-stream";
 const lichessApiEndpoint = process.env.REACT_APP_API_PREFIX;
 const lichessApiToken = process.env.REACT_APP_API_KEY;
 
+const headers = {
+  Authorization: `Bearer ${lichessApiToken}`,
+};
+
 const handleErrors = (response) => {
   if (!response.ok) {
     throw Error(response); // Make this betterer
@@ -13,11 +17,12 @@ const handleErrors = (response) => {
 export const challengeAI = (level) => {
   var formData = new FormData();
   formData.append("level", level);
+  formData.append("color", "black");
+  formData.append("clock.limit", 3600);
+  formData.append("clock.increment", 10);
 
   return fetch(`${lichessApiEndpoint}/challenge/ai`, {
-    headers: {
-      Authorization: `Bearer ${lichessApiToken}`,
-    },
+    headers: headers,
     method: "POST",
     body: formData,
   })
@@ -29,9 +34,7 @@ export const challengeAI = (level) => {
 
 export const getNowPlaying = () => {
   return fetch(`${lichessApiEndpoint}/account/playing`, {
-    headers: {
-      Authorization: `Bearer ${lichessApiToken}`,
-    },
+    headers: headers,
   })
     .then(handleErrors)
     .then((response) => {
@@ -41,9 +44,7 @@ export const getNowPlaying = () => {
 
 export const getProfile = () => {
   return fetch(`${lichessApiEndpoint}/account`, {
-    headers: {
-      Authorization: `Bearer ${lichessApiToken}`,
-    },
+    headers: headers,
   })
     .then(handleErrors)
     .then((response) => {
@@ -53,9 +54,7 @@ export const getProfile = () => {
 
 export const getEventStream = () => {
   return fetch(`${lichessApiEndpoint}/stream/event`, {
-    headers: {
-      Authorization: `Bearer ${lichessApiToken}`,
-    },
+    headers: headers,
   })
     .then(handleErrors)
     .then((response) => {
@@ -63,14 +62,23 @@ export const getEventStream = () => {
     });
 };
 
-export const getBoardStream = (gameId) => {
+export const getBoardEventStream = (gameId) => {
   return fetch(`${lichessApiEndpoint}/board/game/stream/${gameId}`, {
-    headers: {
-      Authorization: `Bearer ${lichessApiToken}`,
-    },
+    headers: headers,
   })
     .then(handleErrors)
     .then((response) => {
       return ndjsonStream(response.body);
+    });
+};
+
+export const makeBoardMove = (gameId, move) => {
+  return fetch(`${lichessApiEndpoint}/board/game/${gameId}/move/${move}`, {
+    headers: headers,
+    method: "POST",
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return response.json();
     });
 };

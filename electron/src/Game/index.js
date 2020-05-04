@@ -1,77 +1,143 @@
 import React, { useState, useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import Chess from "chess.js";
-import moment from "moment";
 
 import { Container, Grid } from "@material-ui/core";
 
 import Player from "./components/Player";
 import Moves from "./components/Moves";
-import GameControls from "./components/GameControls";
+import ConfirmMove from "./components/ConfirmMove";
 import Timer from "./components/Timer";
 
-import { getBoardStream } from "../lichess";
+import { getBoardEventStream, makeBoardMove } from "../lichess";
+import {
+  playerOrder,
+  loadPGN,
+  moveToUCI,
+  transformPlayerDetails,
+  getEndTimes,
+} from "./utils.js";
 
-const playerOrder = ["me", "opponent"];
+const autopatzerdHost = process.env.REACT_APP_AUTOPATZERD_WS;
 
-const transformPlayerDetails = (myUserId, white, black) => {
-  white.colour = "white";
-  black.colour = "black";
+const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
+  const autopatzerdSocketOptions = {
+    retryOnError: true,
+    shouldReconnect: () => true,
+  };
 
-  let players = [white, black];
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    autopatzerdHost,
+    autopatzerdSocketOptions
+  );
 
-  players.forEach((player) => {
-    player.id === myUserId
-      ? (player.opponent = false)
-      : (player.opponent = true);
+  const [autopatzerdMove, setAutopatzerdMove] = useState({
+    move: "",
+    confirmed: false,
   });
 
-  return {
-    me: players.find((p) => !p.opponent),
-    opponent: players.find((p) => p.opponent),
-  };
-};
-
-const getEndTimes = (white, black) => {
-  const timestamp = moment().endOf("second");
-
-  return {
-    white: moment(timestamp).add(white, "ms"),
-    black: moment(timestamp).add(black, "ms"),
-  };
-};
-
-const whoseTurn = (moves) => {
-  return moves.length % 2 === 0 ? "white" : "black";
-};
-
-const isTicking = (moves, colour) => {
-  if (moves.length < 2) {
-    return false;
-  }
-
-  if (whoseTurn(moves) === colour) {
-    return true;
-  }
-
-  return false;
-};
-
-const convertToPgn = (moves) => {
-  let chess = new Chess();
-  chess.load_pgn(moves, { sloppy: true });
-  return chess.history();
-};
-
-const Game = ({ myProfile, gameId }) => {
   const [state, setState] = useState({
     players: null,
-    moves: null,
+    board: new Chess(),
     timers: null,
   });
-  const { players, moves, timers } = state;
+
+  const handleBoardStreamEvent = (value) => {
+    switch (value.type) {
+      case "gameFull":
+        setState({
+          players: transformPlayerDetails(
+            myProfile.id,
+            value.white,
+            value.black
+          ),
+          board: loadPGN(value.state.moves),
+          timers: getEndTimes(value.state.wtime, value.state.btime),
+        });
+        break;
+      case "gameState":
+        setState((state) => ({
+          ...state,
+          board: loadPGN(value.moves),
+          timers: getEndTimes(value.wtime, value.btime),
+        }));
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleAutopatzerdMessage = (message) => {
+    switch (message.op) {
+      case "board":
+        console.log("Board update from autopatzerd: ", message);
+        if (message.move) {
+          setAutopatzerdMove({
+            ...autopatzerdMove,
+            move: message.move,
+          });
+        }
+        break;
+      case "button":
+        console.log("Button press from autopatzerd: ", message);
+        setAutopatzerdMove({
+          ...autopatzerdMove,
+          confirmed: true,
+        });
+        break;
+      case "error":
+        console.log("Error from autopatzerd: ", message);
+        break;
+      case "ping":
+        break;
+      default:
+        break;
+    }
+  };
+
+  const sendAutopatzerdMessage = (message) => {
+    console.log("Sending move to autopatzerd: ", message);
+    sendJsonMessage(message);
+  };
 
   useEffect(() => {
-    getBoardStream(gameId).then((stream) => {
+    if (readyState === ReadyState.OPEN && resetAutopatzerd) {
+      console.log("Sending reset to autopatzerd");
+      sendJsonMessage.send({ op: "reset" });
+    }
+  }, [readyState, resetAutopatzerd, sendJsonMessage]);
+
+  useEffect(() => {
+    if (lastJsonMessage && lastJsonMessage.op) {
+      handleAutopatzerdMessage(lastJsonMessage);
+    }
+  }, [lastJsonMessage]);
+
+  useEffect(() => {
+    const moves = state.board.history();
+    if (moves.length) {
+      sendAutopatzerdMessage({
+        op: "play",
+        move: moves.slice(-1)[0],
+      });
+    }
+  }, [state.board]);
+
+  useEffect(() => {
+    if (autopatzerdMove.move && autopatzerdMove.confirmed) {
+      makeBoardMove(gameId, moveToUCI(state.board, autopatzerdMove.move)).then(
+        () => {
+          setAutopatzerdMove({
+            move: "",
+            confirmed: false,
+          });
+        }
+      );
+    }
+  }, [autopatzerdMove]);
+
+  useEffect(() => {
+    getBoardEventStream(gameId).then((stream) => {
       let read;
       const reader = stream.getReader();
       reader.read().then(
@@ -84,59 +150,59 @@ const Game = ({ myProfile, gameId }) => {
             return;
           }
 
-          switch (value.type) {
-            case "gameFull":
-              setState({
-                players: transformPlayerDetails(
-                  myProfile.id,
-                  value.white,
-                  value.black
-                ),
-                moves: convertToPgn(value.state.moves),
-                timers: getEndTimes(value.state.wtime, value.state.btime),
-              });
-              break;
-            case "gameState":
-              setState((state) => ({
-                ...state,
-                moves: convertToPgn(value.moves),
-                timers: getEndTimes(value.wtime, value.btime),
-              }));
-
-              break;
-            default:
-              break;
-          }
+          handleBoardStreamEvent(value);
 
           return reader.read().then(read);
         })
       );
     });
-  }, [myProfile, gameId]);
+  }, []);
 
   return (
     <Container>
       <Grid container spacing={2}>
-        {playerOrder.map((player) => (
-          <Grid item xs={6} key={player}>
-            {players && <Player details={players[player]} />}
+        <Grid item xs={6}>
+          <Grid item xs={12} key={playerOrder[0]}>
+            {state.players && (
+              <Player details={state.players[playerOrder[0]]} />
+            )}
           </Grid>
-        ))}
-        {playerOrder.map((player) => (
-          <Grid item xs={6} key={player}>
-            {timers && (
+          <Grid item xs={12} key={playerOrder[0]}>
+            {state.timers && (
               <Timer
-                ticking={isTicking(moves, players[player].colour)}
-                endTime={timers[players[player].colour]}
+                board={state.board}
+                colour={state.players[playerOrder[0]].colour}
+                endTime={state.timers[state.players[playerOrder[0]].colour]}
               />
             )}
           </Grid>
-        ))}
-        <Grid item xs={6}>
-          <Moves moves={moves} />
+          <Grid item xs={12}>
+            {state.board && <Moves board={state.board} />}
+          </Grid>
+          {autopatzerdMove.move && !autopatzerdMove.confirmed && (
+            <Grid item xs={12}>
+              <ConfirmMove
+                autopatzerdMove={autopatzerdMove}
+                setAutopatzerdMove={setAutopatzerdMove}
+              />
+            </Grid>
+          )}
         </Grid>
         <Grid item xs={6}>
-          <GameControls />
+          <Grid item xs={12} key={playerOrder[1]}>
+            {state.players && (
+              <Player details={state.players[playerOrder[1]]} />
+            )}
+          </Grid>
+          <Grid item xs={12} key={playerOrder[1]}>
+            {state.timers && (
+              <Timer
+                board={state.board}
+                colour={state.players[playerOrder[1]].colour}
+                endTime={state.timers[state.players[playerOrder[1]].colour]}
+              />
+            )}
+          </Grid>
         </Grid>
       </Grid>
     </Container>

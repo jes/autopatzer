@@ -4,11 +4,11 @@ import chunk from "lodash/chunk";
 import { Container, List, ListItem, Box } from "@material-ui/core";
 import ScrollableFeed from "react-scrollable-feed";
 
-const Moves = ({ moves }) => {
-  const movesListItems = chunk(moves, 2).map((move, index) => {
-    move = move.join(" ");
+const Moves = ({ board }) => {
+  const turnListItems = chunk(board.history(), 2).map((turn, index) => {
+    turn = turn.join(" ");
     return (
-      <ListItem key={move}>
+      <ListItem key={turn}>
         <Box
           display="inline"
           fontWeight="fontWeightMedium"
@@ -21,7 +21,7 @@ const Moves = ({ moves }) => {
           {index + 1}
         </Box>
         <Box display="inline" fontFamily="Monospace" fontSize={16}>
-          {move}
+          {turn}
         </Box>
       </ListItem>
     );
@@ -31,7 +31,7 @@ const Moves = ({ moves }) => {
     <Container>
       <Box m={2} height="280px" overflow="auto" border={1}>
         <ScrollableFeed forceScroll={true}>
-          <List disablePadding={true}>{movesListItems}</List>
+          <List disablePadding={true}>{turnListItems}</List>
         </ScrollableFeed>
       </Box>
     </Container>

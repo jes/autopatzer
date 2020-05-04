@@ -51,7 +51,7 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
             if (!gamesInProgress.includes(value.game.id)) {
               reader.cancel(`Got gameId ${value.game.id}`);
               setFindingGame(false);
-              startNewGame(value.game.id);
+              startNewGame(value.game.id, true);
             }
           }
 

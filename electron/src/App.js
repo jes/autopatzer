@@ -45,6 +45,7 @@ const App = () => {
   const [myProfile, setMyProfile] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [gamesInProgress, setGamesInProgress] = useState([]);
+  const [resetAutopatzerd, setResetAutopatzerd] = useState(false);
 
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
@@ -61,8 +62,9 @@ const App = () => {
     });
   }, []);
 
-  const startNewGame = (gameId) => {
+  const startNewGame = (gameId, resetAutopatzerd) => {
     setGameId(gameId);
+    setResetAutopatzerd(resetAutopatzerd);
     if (modalOpen) {
       handleModalClose();
     }
@@ -71,12 +73,12 @@ const App = () => {
   const inProgressGamesList = gamesInProgress.map((g) => {
     const matchString = `${g.isMyTurn ? "Your" : "Their"} move in ${
       g.variant.name
-    } (${g.speed}) against ${g.opponent.username}`;
+    } (${g.speed}) against ${g.opponent.username} (${g.gameId})`;
     return (
       <ListItem
         button
         onClick={() => {
-          startNewGame(g.gameId);
+          startNewGame(g.gameId, false);
         }}
         key={g.gameId}
       >
@@ -125,6 +127,7 @@ const App = () => {
           </div>
         </Modal>
         {myProfile && gameId && <Game myProfile={myProfile} gameId={gameId} />}
+        {/* {myProfile && <Game myProfile={myProfile} gameId={"YL9PiEYN"} />} */}
       </Container>
     </div>
   );

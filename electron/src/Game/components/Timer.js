@@ -4,16 +4,28 @@ import Countdown from "react-countdown";
 
 import { Box, Container } from "@material-ui/core";
 
-const Timer = ({ ticking, endTime }) => {
+const Timer = ({ board, colour, endTime }) => {
   const counter = useRef();
 
+  const isTicking = () => {
+    if (board.history().length <= 2) {
+      return false;
+    }
+
+    if (board.turn() === colour.charAt(0)) {
+      return true;
+    }
+
+    return false;
+  };
+
   useEffect(() => {
-    if (ticking) {
+    if (isTicking()) {
       counter.current.api.start();
     } else {
       counter.current.api.pause();
     }
-  }, [counter, ticking, endTime]);
+  }, [counter, board, colour, endTime]);
 
   return (
     <Container>
