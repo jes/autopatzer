@@ -100,7 +100,11 @@ websocket '/ws' => sub {
                 Mojo::IOLoop->remove($_) for @timers;
                 $ap->reset;
             } elsif ($msg->{op} eq 'play') {
-                $ap->moveWithMotors($msg->{move});
+                if ($ap->moveShown) {
+                    $ap->moveWithoutMotors($msg->{move});
+                } else {
+                    $ap->moveWithMotors($msg->{move});
+                }
             } elsif ($msg->{op} eq 'ping') {
                 # do nothing
             } else {
