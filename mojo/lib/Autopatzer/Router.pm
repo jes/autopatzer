@@ -140,7 +140,7 @@ sub route {
                         };
 
                         if (!$visited{$self->hashDijkstraState($newnode)}) {
-                            $q->insert($newnode, $newnode->{len});
+                            $q->insert($newnode, $newnode->{len} + ($to eq 'xx' ? 0 : $self->movementCost($newnode->{piecex}, $newnode->{piecey}, $tox, $toy, 1)));
                         }
                     }
                     last;
@@ -180,7 +180,7 @@ sub route {
                 };
 
                 if (!$visited{$self->hashDijkstraState($newnode)}) {
-                    $q->insert($newnode, $newnode->{len});
+                    $q->insert($newnode, $newnode->{len} + ($to eq 'xx' ? 0 : $self->movementCost($newnode->{piecex}, $newnode->{piecey}, $tox, $toy, 1)));
                 }
             }
         }
