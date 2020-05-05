@@ -105,7 +105,7 @@ is(getRoute('e1' => 'xx'), 'goto 1 5,grab,goto 0 5,release', "14. Rxe1 (1)");
 is(getRoute('d1' => 'e1'), 'goto 1 4,grab,goto 1 5,release', "14. Rxe1 (2)");
 $game->go_move('Rxe1');
 
-is(getRoute('c6' => 'e7'), 'goto 6 3,grab,goto 6 4,goto 7 5,release', "14... Ne7");
+is(getRoute('c6' => 'e7'), 'goto 6 3,grab,goto 7 4,goto 7 5,release', "14... Ne7");
 $game->go_move('Ne7');
 
 is(getRoute('g3' => 'h4'), 'goto 3 7,grab,goto 4 8,release', "15. Qh4");
