@@ -17,6 +17,7 @@ import {
   transformPlayerDetails,
   getEndTimes,
 } from "./utils.js";
+import { logger } from "../log";
 
 const autopatzerdHost = process.env.REACT_APP_AUTOPATZERD_WS;
 
@@ -48,6 +49,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
   });
 
   const handleBoardStreamEvent = (value) => {
+    logger.info({ event: "lichess-board-stream", data: value });
     switch (value.type) {
       case "gameFull":
         setState({
@@ -75,7 +77,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
   const handleAutopatzerdMessage = (message) => {
     switch (message.op) {
       case "board":
-        console.log("Board update from autopatzerd: ", message);
+        logger.info({ event: "autopatzerd-board", data: message });
         if (!message.move.length) {
           setAutopatzerdMove({
             move: "",
@@ -93,7 +95,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         });
         break;
       case "button":
-        console.log("Button press from autopatzerd: ", message);
+        logger.info({ event: "autopatzerd-button", data: message });
         setAutopatzerdMove({
           ...autopatzerdMove,
           confirmed: true,
@@ -104,9 +106,10 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
         });
         break;
       case "error":
-        console.log("Error from autopatzerd: ", message);
+        logger.error({ event: "autopatzerd-error", data: message });
         break;
       case "ping":
+        logger.debug({ event: "autopatzerd-ping", data: message });
         break;
       default:
         break;
@@ -114,14 +117,15 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
   };
 
   const sendAutopatzerdMessage = (message) => {
-    console.log("Sending move to autopatzerd: ", message);
+    logger.info({ event: "autopatzerd-play", data: message });
     sendJsonMessage(message);
   };
 
   useEffect(() => {
     if (readyState === ReadyState.OPEN && resetAutopatzerd) {
-      console.log("Sending reset to autopatzerd");
-      sendJsonMessage.send({ op: "reset" });
+      const message = { op: "reset" };
+      logger.info({ event: "autopatzerd-reset", data: message });
+      sendJsonMessage.send(message);
     }
   }, [readyState, resetAutopatzerd, sendJsonMessage]);
 
@@ -222,7 +226,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
             )}
           </Grid>
           <Grid item xs={12}>
-            {boardChanges.gained.length != 0 && (
+            {boardChanges.gained.length !== 0 && (
               <Container>
                 <Box m={2} align="center" text-align="center" color="green">
                   Gained:
@@ -232,7 +236,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
             )}
           </Grid>
           <Grid item xs={12}>
-            {boardChanges.lost.length != 0 && (
+            {boardChanges.lost.length !== 0 && (
               <Container>
                 <Box m={2} align="center" text-align="center" color="red">
                   Lost:

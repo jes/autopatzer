@@ -3,6 +3,7 @@ import { Box, Container, Grid } from "@material-ui/core";
 
 import PlayerOnline from "./PlayerOnline";
 import { getPlayerStatus } from "../../lichess";
+import { logger } from "../../log";
 
 const Player = ({ details: { id, colour, aiLevel, rating } }) => {
   const [online, setOnline] = useState(false);
@@ -11,6 +12,7 @@ const Player = ({ details: { id, colour, aiLevel, rating } }) => {
     const interval = setInterval(() => {
       if (!aiLevel) {
         getPlayerStatus(id).then(([player]) => {
+          logger.info({ event: "lichess-user-status", data: player });
           setOnline(player.online);
         });
       }

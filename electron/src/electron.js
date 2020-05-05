@@ -1,13 +1,15 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow } = require("electron");
 
-const path = require('path');
-const url = require('url');
+const path = require("path");
+const url = require("url");
 
-const startUrl = process.env.ELECTRON_START_URL || url.format({
-  pathname: path.join(__dirname, '/../build/index.html'),
-  protocol: 'file:',
-  slashes: true
-});
+const startUrl =
+  process.env.ELECTRON_START_URL ||
+  url.format({
+    pathname: path.join(__dirname, "/../build/index.html"),
+    protocol: "file:",
+    slashes: true,
+  });
 
 let mainWindow;
 
@@ -17,20 +19,23 @@ const createWindow = () => {
     height: 480,
     frame: true,
     autoHideMenuBar: true,
-    titleBarStyle: 'hidden',
-  })
+    titleBarStyle: "hidden",
+    webPreferences: {
+      nodeIntegration: true,
+    },
+  });
 
   mainWindow.loadURL(startUrl);
 
-  mainWindow.on('closed', function () {
-    mainWindow = null
-  })
-}
+  mainWindow.on("closed", function () {
+    mainWindow = null;
+  });
+};
 
-app.allowRendererProcessReuse = true
+app.allowRendererProcessReuse = true;
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  app.quit()
-})
+app.on("window-all-closed", () => {
+  app.quit();
+});

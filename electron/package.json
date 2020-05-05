@@ -7,6 +7,7 @@
     "@material-ui/icons": "^4.9.1",
     "can-ndjson-stream": "^1.0.2",
     "chess.js": "^0.10.3",
+    "craco": "0.0.3",
     "electron": "^8.2.3",
     "moment": "^2.24.0",
     "react": "^16.13.1",
@@ -15,16 +16,17 @@
     "react-scripts": "3.4.1",
     "react-scrollable-feed": "^1.1.2",
     "react-use-websocket": "^2.0.1",
+    "winston": "^3.2.1",
     "yarn": "^1.22.4"
   },
   "main": "src/electron.js",
   "homepage": "./",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "craco start",
+    "build": "craco build",
     "eject": "react-scripts eject",
     "server": "electron .",
-    "dev": "concurrently 'BROWSER=none yarn start' 'wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .'"
+    "dev": "concurrently 'BROWSER=none craco start' 'wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .'"
   },
   "eslintConfig": {
     "extends": "react-app"
