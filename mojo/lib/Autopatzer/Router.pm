@@ -102,6 +102,7 @@ sub route {
 
                 # if we'd want to move on to a non-displaced piece, displace it instead so that we can try again next time around
                 if ($node->{board}{"$x,$y"}) {
+                    my $displaceCost;
                     for my $displace ([-0.5,-0.5], [-0.5,0.5], [0.5,-0.5], [0.5,0.5]) {
                         my ($dispx,$dispy) = @$displace;
                         my ($newx,$newy) = ($x+$dispx,$y+$dispy);
@@ -121,13 +122,17 @@ sub route {
                         delete $newboard->{"$x,$y"};
                         $newboard->{"$newx,$newy"} = 1;
 
+                        # cost to displace a piece is roughly the same regardless of which square we displace it to, so let's
+                        # cache the result as this calculation is the single most expensive part of routing...
+                        $displaceCost ||= $self->commandsCost($motorx, $motory, [@$begin_cmds, @{ $node->{cmds} }, @$finish_cmds]);
+
                          my $newnode = {
                             x => $node->{x},
                             y => $node->{y},
                             piecex => $node->{piecex},
                             piecey => $node->{piecey},
                             magnet => $node->{magnet},
-                            len => $self->commandsCost($motorx, $motory, [@$begin_cmds, @{ $node->{cmds} }, @$finish_cmds]),
+                            len => $displaceCost,
                             begin_cmds => $begin_cmds,
                             cmds => $node->{cmds},
                             finish_cmds => $finish_cmds,
