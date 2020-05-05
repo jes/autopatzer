@@ -46,7 +46,7 @@ to just tell Mojo which moves to commit to, for both players.
 
 ### Reset internal game state
 
-    {"op":"reset"}
+    {"op":"reset","moves":["d4","d5","Bf4","Nf6"}
 
 This tells Mojolicious app to reset its game state to the start of the game. It won't automatically
 reset the physical board (and it's not possible e.g. for captured pieces to be automatically
@@ -54,6 +54,9 @@ returned to the starting position), so we probably also want a message telling t
 the board. Ideally the JS app would ask for the board to be reset *before* seeking another game,
 instead of after, otherwise the first move of the game will time out while the user is busy
 resetting the pieces.
+
+If "moves" is present, then Mojolicious app will play through those moves after resetting to the
+start state.
 
 ### Ping
 
