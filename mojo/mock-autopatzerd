@@ -70,10 +70,12 @@ websocket '/ws' => sub {
                 $game = Chess::Rep->new;
                 $mymove = 0;
                 if (@{ $msg->{moves}||[] }) {
-                    $game->go_move($_) for @{ $msg->{moves} };
-                    $mymove = !$mymove;
+                    for my $m (@{ $msg->{moves} }) {
+                        $game->go_move($m);
+                        $mymove = !$mymove;
+                    }
+                    $my_move->() if $mymove;
                 }
-                $my_move->() if $mymove;
             } elsif ($msg->{op} eq 'play') {
                 $game->go_move($msg->{move});
                 $mymove = !$mymove;
