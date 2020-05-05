@@ -99,6 +99,9 @@ websocket '/ws' => sub {
             if ($msg->{op} eq 'reset') {
                 Mojo::IOLoop->remove($_) for @timers;
                 $ap->reset;
+                for my $m (@{ $msg->{moves}||[] }) {
+                    $ap->moveWithMotors($m);
+                }
             } elsif ($msg->{op} eq 'play') {
                 if ($ap->moveShown) {
                     $ap->moveWithoutMotors($msg->{move});
