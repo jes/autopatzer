@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+#use Devel::NYTProf;
+
 use Test::More;
 use Autopatzer;
 use Autopatzer::Router;
