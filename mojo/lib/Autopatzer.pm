@@ -329,7 +329,7 @@ sub moveShown {
         my $from = $lost[0];
         my $to = $gained[0];
         my $promote = '';
-        if ($self->{game}->get_piece_at($from) & 0x1 && $to =~ /^[18]$/) {
+        if ($self->{game}->get_piece_at($from) & 0x1 && $to =~ /[18]/) {
             # TODO: ask what piece to promote to
             $promote = 'q';
         }
