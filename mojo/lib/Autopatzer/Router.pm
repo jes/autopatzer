@@ -162,10 +162,6 @@ sub route {
 
                 push @$newcmds, ['goto',$x,$y];
 
-                my $newboard = { %{ $node->{board} } };
-                $newboard->{"$x,$y"} = 1 if $x > 0 && $x < 9 && $y > 0 && $y < 9;
-                delete $newboard->{"$node->{piecex},$node->{piecey}"};
-
                 my $newnode = {
                     x => $x,
                     y => $y,
@@ -176,7 +172,7 @@ sub route {
                     begin_cmds => $node->{begin_cmds},
                     cmds => $newcmds,
                     finish_cmds => $node->{finish_cmds},
-                    board => $newboard,
+                    board => $node->{board},
                 };
 
                 if (!$visited{$self->hashDijkstraState($newnode)}) {
