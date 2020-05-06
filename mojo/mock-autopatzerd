@@ -23,6 +23,43 @@ websocket '/ws' => sub {
         $c->send(encode_json({op => 'ping'}));
     });
 
+    my $my_move = sub {
+        my $move = random_move($game);
+        my $newgame = dclone($game);
+        $newgame->go_move($move);
+        my $before = occupied($game);
+        my $after = occupied($newgame);
+        my ($lost,$gained) = changes($before, $after);
+
+        my @lostsofar;
+        my @gainedsofar;
+        my @messages;
+        while (@$lost || @$gained) {
+            if ((rand > 0.5 && @$lost) || !@$gained) {
+                push @lostsofar, shift @$lost;
+            } else {
+                push @gainedsofar, shift @$gained;
+            }
+
+            push @messages, {
+                op => 'board',
+                move => (@$lost+@$gained==0) ? $move : '',
+                lost => [@lostsofar],
+                gained => [@gainedsofar],
+            };
+        }
+
+        push @messages, {op=>'button'};
+
+        Mojo::IOLoop->remove($_) for @timers;
+
+        for my $i (0..$#messages) {
+            push @timers, Mojo::IOLoop->timer(2*($i+1) => sub {
+                $c->send(encode_json($messages[$i]));
+            });
+        }
+    };
+
     $c->on(message => sub {
         my ($c, $msg_str) = @_;
         try {
@@ -31,45 +68,18 @@ websocket '/ws' => sub {
             if ($msg->{op} eq 'reset') {
                 Mojo::IOLoop->remove($_) for @timers;
                 $game = Chess::Rep->new;
+                $mymove = 0;
+                if (@{ $msg->{moves}||[] }) {
+                    for my $m (@{ $msg->{moves} }) {
+                        $game->go_move($m);
+                        $mymove = !$mymove;
+                    }
+                    $my_move->() if $mymove;
+                }
             } elsif ($msg->{op} eq 'play') {
                 $game->go_move($msg->{move});
                 $mymove = !$mymove;
-                return unless $mymove;
-
-                my $move = random_move($game);
-                my $newgame = dclone($game);
-                $newgame->go_move($move);
-                my $before = occupied($game);
-                my $after = occupied($newgame);
-                my ($lost,$gained) = changes($before, $after);
-
-                my @lostsofar;
-                my @gainedsofar;
-                my @messages;
-                while (@$lost || @$gained) {
-                    if ((rand > 0.5 && @$lost) || !@$gained) {
-                        push @lostsofar, shift @$lost;
-                    } else {
-                        push @gainedsofar, shift @$gained;
-                    }
-
-                    push @messages, {
-                        op => 'board',
-                        move => (@$lost+@$gained==0) ? $move : '',
-                        lost => [@lostsofar],
-                        gained => [@gainedsofar],
-                    };
-                }
-
-                push @messages, {op=>'button'};
-
-                Mojo::IOLoop->remove($_) for @timers;
-
-                for my $i (0..$#messages) {
-                    push @timers, Mojo::IOLoop->timer(2*($i+1) => sub {
-                        $c->send(encode_json($messages[$i]));
-                    });
-                }
+                $my_move->() if $mymove;
             } elsif ($msg->{op} eq 'ping') {
                 # do nothing
             } else {

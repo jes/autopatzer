@@ -8,22 +8,29 @@ use RPi::Pin;
 use RPi::Const qw(:all);
 use Time::HiRes qw(time);
 
-my $DEBOUNCE_TIME = 0.01; # secs
+my $DEBOUNCE_TIME = 0.25; # secs
 
 sub new {
     my ($pkg, %opts) = @_;
 
     my $self = bless \%opts, $pkg;
 
-    {
-        no strict 'refs';
-        *{"Autopatzer::Button::pin$self->{pin}_interrupt"} = sub {
-            $self->interrupt;
-        };
-    }
+    $self->{pin} = int($self->{pin});
 
     $self->{rpi_pin} = RPi::Pin->new($self->{pin});
-    $self->{rpi_pin}->set_interrupt(EDGE_BOTH, "Autopatzer::Button::pin$self->{pin}_interrupt");
+
+    # XXX: use gpiomon instead of RPi::Pin to monitor the interrupt
+    # because RPi::Pin causes segfaults
+    open ($self->{fh}, '-|', "./gpiomon $self->{pin}")
+        or die "can't run gpiomon: $!";
+    $self->{handle} = AnyEvent::Handle->new(
+        fh => $self->{fh},
+        on_read => sub {
+            my ($handle) = @_;
+            substr($handle->rbuf, 0, length($handle->rbuf), '');
+            $self->interrupt;
+        }
+    );
 
     $self->{last_state} = $self->{rpi_pin}->read;
     $self->{ready_for_press} = 1 if $self->{last_state};
