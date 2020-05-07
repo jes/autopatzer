@@ -19,8 +19,8 @@ websocket '/ws' => sub {
     my $game = Chess::Rep->new;
     my @timers;
 
-    Mojo::IOLoop->recurring(60 => sub {
-        $c->send(encode_json(op => 'ping'));
+    Mojo::IOLoop->recurring(5 => sub {
+        $c->send(encode_json({op => 'ping'}));
     });
 
     my $my_move = sub {
