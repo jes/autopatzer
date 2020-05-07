@@ -13,7 +13,8 @@ export const moveToUCI = (board, move) => {
   const tempBoard = new Chess(board.fen());
   const moveDetails = tempBoard.move(move, { sloppy: true });
   const isPawnPromotion = moveDetails.flags.includes("p");
-  return [`${moveDetails.from}${moveDetails.to}`, isPawnPromotion];
+  const promotionPiece = isPawnPromotion ? moveDetails.promotion : '';
+  return [`${moveDetails.from}${moveDetails.to}${promotionPiece}`, isPawnPromotion];
 };
 
 export const transformPlayerDetails = (myUserId, white, black) => {

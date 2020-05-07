@@ -17,7 +17,7 @@ const promotionPieces = {
   N: faChessKnight,
 };
 
-const pawnPromotionRegex = /(=)[QNBK]/;
+const pawnPromotionRegex = /(=)[QRBN]/;
 
 const useStyles = makeStyles(() => ({
   icon: {
