@@ -37,7 +37,7 @@ const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
             {aiLevel ? aiLevel : rating}
           </Grid>
           <Grid item xs={6}>
-            {aiLevel ? "Stockfish Level " + aiLevel : name}
+            {aiLevel ? "Stockfish level " + aiLevel : name}
           </Grid>
         </Grid>
       </Box>
