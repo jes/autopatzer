@@ -168,6 +168,7 @@ const Game = ({ myProfile, gameId }) => {
   }, [state.board, state.resetSent]);
 
   useEffect(() => {
+    let showModal = false;
     if (autopatzerdMove.move) {
       const [uci, pawnPromotion] = moveToUCI(state.board, autopatzerdMove.move);
 
@@ -180,9 +181,14 @@ const Game = ({ myProfile, gameId }) => {
             });
           });
         } else if (!autopatzerdMove.pawnPromotionChosen && pawnPromotion) {
-          handlePawnPromotionModalOpen();
+          showModal = true;
         }
       }
+    }
+    if (showModal) {
+      handlePawnPromotionModalOpen();
+    } else {
+      handlePawnPromotionModalClose();
     }
   }, [autopatzerdMove, gameId]);
 
