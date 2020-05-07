@@ -168,7 +168,6 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
 
   useEffect(() => {
     if (autopatzerdMove.move) {
-      logger.info({ event: "lolz", data: autopatzerdMove });
       const [uci, pawnPromotion] = moveToUCI(state.board, autopatzerdMove.move);
 
       if (uci) {
