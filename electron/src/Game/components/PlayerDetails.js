@@ -5,7 +5,7 @@ import PlayerOnline from "./PlayerOnline";
 import { getPlayerStatus } from "../../lichess";
 import { logger } from "../../log";
 
-const Player = ({ details: { id, colour, aiLevel, rating } }) => {
+const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
   const [online, setOnline] = useState(false);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const Player = ({ details: { id, colour, aiLevel, rating } }) => {
             {aiLevel ? aiLevel : rating}
           </Grid>
           <Grid item xs={6}>
-            {aiLevel ? "A.I." : id}
+            {aiLevel ? "Stockfish Level " + aiLevel : name}
           </Grid>
         </Grid>
       </Box>
