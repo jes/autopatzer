@@ -24,14 +24,14 @@ int squareMap[64] = {
 // we set a different threshold for each square
 int analogThreshold[64] = {
 //  1    2    3    4    5    6    7    8
-  705, 730, 685, 695, 680, 650, 680, 720, // a
-  705, 675, 705, 725, 670, 710, 670, 720, // b
-  725, 690, 685, 650, 680, 700, 720, 705, // c
-  705, 685, 725, 715, 690, 680, 640, 700, // d
-  695, 735, 665, 690, 640, 700, 705, 740, // e
-  690, 735, 675, 695, 710, 680, 705, 695, // f
-  660, 690, 630, 645, 700, 710, 710, 715, // g
-  710, 675, 680, 680, 710, 675, 675, 705, // h
+  715, 745, 695, 705, 690, 650, 690, 730, // a
+  715, 680, 715, 735, 675, 725, 675, 730, // b
+  740, 705, 695, 655, 680, 710, 730, 715, // c
+  720, 690, 740, 720, 700, 690, 640, 715, // d
+  710, 755, 670, 690, 640, 710, 715, 750, // e
+  700, 745, 675, 705, 720, 690, 715, 705, // f
+  660, 700, 630, 645, 710, 725, 720, 725, // g
+  725, 675, 690, 680, 720, 675, 680, 710, // h
 };
 
 int bit1pin, bit2pin, bit3pin;
@@ -81,7 +81,7 @@ void scanHallSensors() {
       updateSteppers(); // HACK: don't let scanHallSensors() block stepper motor operation
       int sqr = squareMap[i*8+j];
       int val = analogRead(j);
-      bool occ = val > (analogThreshold[sqr] + 15);
+      bool occ = val > (analogThreshold[sqr] + 30);
       if (squareOccupied[sqr] != occ) {
         squareOccupied[sqr] = occ;
         lastChange[sqr] = millis();
