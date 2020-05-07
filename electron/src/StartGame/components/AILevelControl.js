@@ -1,18 +1,16 @@
 import React from "react";
 import { Button, ButtonGroup, Grid, Typography } from "@material-ui/core";
 
-const colourRanges = ["white", "random", "black"];
+const aiLevels = Array.from(new Array(8), (x, i) => i + 1);
 
-const ColourControl = ({ colour, setColour }) => {
-  const colourButtons = colourRanges.map((c) => (
+const AILevelControl = ({ aiLevel, setAILevel }) => {
+  const aiLevelButtons = aiLevels.map((l) => (
     <Button
-      variant="contained"
-      fullWidth={true}
-      onClick={() => setColour(c)}
-      color={colour === c ? "primary" : "default"}
-      key={c}
+      color={aiLevel === l ? "primary" : "default"}
+      onClick={() => setAILevel(l)}
+      key={`level-${l}`}
     >
-      {c}
+      {l}
     </Button>
   ));
 
@@ -20,16 +18,16 @@ const ColourControl = ({ colour, setColour }) => {
     <Grid container>
       <Grid item xs={2}>
         <Typography variant="h6" align="center">
-          Colour
+          AI Level
         </Typography>
       </Grid>
       <Grid item xs={10}>
         <ButtonGroup variant="contained" fullWidth={true}>
-          {colourButtons}
+          {aiLevelButtons}
         </ButtonGroup>
       </Grid>
     </Grid>
   );
 };
 
-export default ColourControl;
+export default AILevelControl;

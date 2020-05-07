@@ -1,32 +1,39 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
+import { Button, ButtonGroup, Grid, Typography } from "@material-ui/core";
 
-const timeRanges = ["10+0", "10+5", "30+0", "30+20"];
+const timeRanges = [
+  { time: 15, increment: 10 },
+  { time: 30, increment: 0 },
+  { time: 30, increment: 20 },
+];
 
 const TimeControl = ({ time, setTime }) => {
   const timeButtons = timeRanges.map((t) => (
-    <Grid item xs={6} key={t}>
-      <Button
-        variant="contained"
-        fullWidth={true}
-        onClick={() => setTime(t)}
-        color={time === t ? "primary" : "default"}
-      >
-        {t}
-      </Button>
-    </Grid>
+    <Button
+      onClick={() => setTime(t)}
+      color={
+        time.time === t.time && time.increment === t.increment
+          ? "primary"
+          : "default"
+      }
+      key={`${t.time}+${t.increment}`}
+    >
+      {`${t.time}+${t.increment}`}
+    </Button>
   ));
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
+    <Grid container>
+      <Grid item xs={2}>
         <Typography variant="h6" align="center">
-          Time Control
+          Time
         </Typography>
       </Grid>
-      {timeButtons}
+      <Grid item xs={10}>
+        <ButtonGroup variant="contained" fullWidth={true}>
+          {timeButtons}
+        </ButtonGroup>
+      </Grid>
     </Grid>
   );
 };

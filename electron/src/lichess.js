@@ -14,14 +14,31 @@ const handleErrors = (response) => {
   return response;
 };
 
-export const challengeAI = (level) => {
+export const challengeAI = (level, time, colour) => {
   var formData = new FormData();
   formData.append("level", level);
-  formData.append("color", "black");
-  formData.append("clock.limit", 3600);
-  formData.append("clock.increment", 10);
+  formData.append("color", colour);
+  formData.append("clock.limit", time.time * 60);
+  formData.append("clock.increment", time.increment);
 
   return fetch(`${lichessApiEndpoint}/challenge/ai`, {
+    headers: headers,
+    method: "POST",
+    body: formData,
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return response.json();
+    });
+};
+
+export const createSeek = (time, colour) => {
+  var formData = new FormData();
+  formData.append("time", time.time);
+  formData.append("increment", time.increment);
+  formData.append("color", colour);
+
+  return fetch(`${lichessApiEndpoint}/board/seek`, {
     headers: headers,
     method: "POST",
     body: formData,

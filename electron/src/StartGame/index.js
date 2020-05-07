@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-import TimeControl from "./components/TimeControl";
-import RatingControl from "./components/RatingControl";
-import ColourControl from "./components/ColourControl";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import Divider from "@material-ui/core/Divider";
+
+import {
+  Container,
+  Grid,
+  Button,
+  CircularProgress,
+  Divider,
+} from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
-import CircularProgress from "@material-ui/core/CircularProgress";
 
-import { challengeAI, getEventStream } from "../lichess";
+import TimeControl from "./components/TimeControl";
+import ColourControl from "./components/ColourControl";
+import AILevelControl from "./components/AILevelControl";
+import { createSeek, challengeAI, getEventStream } from "../lichess";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -32,10 +36,11 @@ const useStyles = makeStyles((theme) => ({
 
 const StartGame = ({ gamesInProgress, startNewGame }) => {
   const classes = useStyles();
-  const [time, setTime] = useState("10+0");
-  const [rating, setRating] = useState("800-1000");
-  const [colour, setColour] = useState("R");
+  const [time, setTime] = useState({ time: 15, increment: 10 });
+  const [colour, setColour] = useState("random");
+  const [aiLevel, setAILevel] = useState(1);
   const [findingGame, setFindingGame] = useState(false);
+  const [findingAIGame, setFindingAIGame] = useState(false);
 
   const getNewGameId = (gamesInProgress, startNewGame) => {
     getEventStream().then((stream) => {
@@ -69,38 +74,61 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
   }, [gamesInProgress, startNewGame]);
 
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <TimeControl time={time} setTime={setTime} />
+    <Container>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TimeControl time={time} setTime={setTime} />
+        </Grid>
+        <Grid item xs={12}>
+          <ColourControl colour={colour} setColour={setColour} />
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+        <Grid item xs={12}>
+          <AILevelControl aiLevel={aiLevel} setAILevel={setAILevel} />
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+        <Grid item xs={6}>
+          <div className={classes.wrapper}>
+            <Button
+              variant="contained"
+              fullWidth={true}
+              disabled={findingGame}
+              onClick={() => {
+                setFindingGame(true);
+                createSeek(time, colour);
+              }}
+            >
+              {findingGame ? "Seeking Opponent" : "Seek Opponent"}
+            </Button>
+            {findingGame && (
+              <CircularProgress size={24} className={classes.buttonProgress} />
+            )}
+          </div>
+        </Grid>
+        <Grid item xs={6}>
+          <div className={classes.wrapper}>
+            <Button
+              variant="contained"
+              fullWidth={true}
+              disabled={findingAIGame}
+              onClick={() => {
+                setFindingAIGame(true);
+                challengeAI(aiLevel, time, colour);
+              }}
+            >
+              {findingAIGame ? "Starting AI Game" : "Challenge AI"}
+            </Button>
+            {findingAIGame && (
+              <CircularProgress size={24} className={classes.buttonProgress} />
+            )}
+          </div>
+        </Grid>
       </Grid>
-      <Grid item xs={6}>
-        <RatingControl rating={rating} setRating={setRating} />
-      </Grid>
-      <Grid item xs={6}>
-        <ColourControl colour={colour} setColour={setColour} />
-      </Grid>
-      <Grid item xs={12}>
-        <Divider variant="middle" />
-      </Grid>
-      <Grid item xs={12}>
-        <div className={classes.wrapper}>
-          <Button
-            variant="contained"
-            fullWidth={true}
-            disabled={findingGame}
-            onClick={() => {
-              setFindingGame(true);
-              challengeAI(1);
-            }}
-          >
-            {findingGame ? "Seeking Opponent..." : "Seek"}
-          </Button>
-          {findingGame && (
-            <CircularProgress size={24} className={classes.buttonProgress} />
-          )}
-        </div>
-      </Grid>
-    </Grid>
+    </Container>
   );
 };
 

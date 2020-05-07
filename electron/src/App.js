@@ -9,27 +9,23 @@ import {
   ListItemText,
   Box,
 } from "@material-ui/core";
-
 import { makeStyles } from "@material-ui/core/styles";
 
 import "./App.css";
-import StartGame from "./StartGame";
 import Game from "./Game";
+import StartGame from "./StartGame";
 import { getProfile, getNowPlaying } from "./lichess";
 
 const useStyles = makeStyles((theme) => ({
-  paper: {
+  modal: {
     position: "absolute",
-    width: "95%",
-    height: "95%",
+    width: "90%",
     top: "50%",
     left: "50%",
     transform: `translate(-50%, -50%)`,
-    backgroundColor: theme.palette.background.paper,
-    boxSizing: "border-box",
-    border: "2px solid #000",
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
+    backgroundColor: "#fff",
+    border: "1px solid #000",
+    outline: 0,
   },
 }));
 
@@ -109,12 +105,12 @@ const App = () => {
           </Grid>
         )}
         <Modal open={modalOpen} onClose={handleModalClose}>
-          <div className={classes.paper}>
+          <Box className={classes.modal} p={2}>
             <StartGame
               gamesInProgress={gamesInProgress}
               startNewGame={startNewGame}
             />
-          </div>
+          </Box>
         </Modal>
         {myProfile && gameId && <Game myProfile={myProfile} gameId={gameId} />}
       </Container>
