@@ -29,8 +29,9 @@ my $ap = Autopatzer->new(
 my $button = Autopatzer::Button->new(
     pin => 21, # physical pin 40, BCM pin 21, WiringPi pin 29
     cb => sub {
-        print "BUTTON PRESS!\n";
-        $_->send(encode_json({op => 'button'})) for @clients;
+        my $m = encode_json({op => 'button'});
+        print ">> $m\n";
+        $_->send($m) for @clients;
     },
 );
 
@@ -71,7 +72,9 @@ sub send_changes {
         }
     }
 
-    $_->send(encode_json({op => 'board', lost => \@lost, gained => \@gained, move => $move})) for @clients;
+    my $m = encode_json({op => 'board', lost => \@lost, gained => \@gained, move => $move});
+    print ">> $m\n";
+    $_->send($m) for @clients;
 }
 
 websocket '/ws' => sub {
@@ -88,11 +91,13 @@ websocket '/ws' => sub {
 
     my @timers;
     my $ping_timer = Mojo::IOLoop->recurring(60 => sub {
-        $c->send(encode_json(op => 'ping'));
+        my $m = encode_json({op => 'ping'});
+        $c->send($m);
     });
 
     $c->on(message => sub {
         my ($c, $msg_str) = @_;
+        print "<< $msg_str\n";
         try {
             my $msg = decode_json($msg_str);
 
@@ -102,6 +107,7 @@ websocket '/ws' => sub {
                 for my $m (@{ $msg->{moves}||[] }) {
                     $ap->moveWithMotors($m);
                 }
+                send_changes();
             } elsif ($msg->{op} eq 'play') {
                 if ($ap->moveShown) {
                     $ap->moveWithoutMotors($msg->{move});
@@ -111,11 +117,13 @@ websocket '/ws' => sub {
             } elsif ($msg->{op} eq 'ping') {
                 # do nothing
             } else {
-                $c->send(encode_json({op=>'error',error=>'No op specified.'}));
+                my $m = encode_json({op=>'error',error=>'No op specified.'});
+                $c->send($m);
             }
         } catch {
             warn "$_";
-            $c->send(encode_json({op=>'error',error=>$_}));
+            my $m = encode_json({op=>'error',error=>$_});
+            $c->send($m);
         };
     });
 
