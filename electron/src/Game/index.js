@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Chess from "chess.js";
 
-import { Container, Grid, Box } from "@material-ui/core";
+import { Container, Grid, Box, Modal } from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
 
 import PlayerDetails from "./components/PlayerDetails";
 import Moves from "./components/Moves";
 import ConfirmMove from "./components/ConfirmMove";
 import Timer from "./components/Timer";
+import PawnPromotion from "./components/PawnPromotion";
 
 import { getBoardEventStream, makeBoardMove } from "../lichess";
 import {
@@ -21,7 +23,21 @@ import { logger } from "../log";
 
 const autopatzerdHost = process.env.REACT_APP_AUTOPATZERD_WS;
 
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    position: "absolute",
+    width: "60%",
+    top: "50%",
+    left: "50%",
+    transform: `translate(-50%, -50%)`,
+    backgroundColor: theme.palette.background.paper,
+    border: "1px solid #000",
+  },
+}));
+
 const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
+  const classes = useStyles();
+
   const autopatzerdSocketOptions = {
     retryOnError: true,
     shouldReconnect: () => true,
@@ -37,6 +53,8 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     confirmed: false,
   });
 
+  const [pawnPromotionModalOpen, setPawnPromotionModalOpen] = useState(false);
+
   const [boardChanges, setBoardChanges] = useState({
     gained: [],
     lost: [],
@@ -47,6 +65,9 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     board: new Chess(),
     timers: null,
   });
+
+  const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
+  const handlePawnPromotionModalClose = () => setPawnPromotionModalOpen(false);
 
   const handleBoardStreamEvent = (value) => {
     logger.info({ event: "lichess-board-stream", data: value });
@@ -146,15 +167,22 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
   }, [state.board]);
 
   useEffect(() => {
-    if (autopatzerdMove.move && autopatzerdMove.confirmed) {
-      makeBoardMove(gameId, moveToUCI(state.board, autopatzerdMove.move)).then(
-        () => {
-          setAutopatzerdMove({
-            move: "",
-            confirmed: false,
+    if (autopatzerdMove.move) {
+      logger.info({ event: "lolz", data: autopatzerdMove });
+      const [uci, pawnPromotion] = moveToUCI(state.board, autopatzerdMove.move);
+
+      if (uci) {
+        if (autopatzerdMove.confirmed) {
+          makeBoardMove(gameId, uci).then(() => {
+            setAutopatzerdMove({
+              move: "",
+              confirmed: false,
+            });
           });
+        } else if (!autopatzerdMove.pawnPromotionChosen && pawnPromotion) {
+          handlePawnPromotionModalOpen();
         }
-      );
+      }
     }
   }, [autopatzerdMove, gameId]);
 
@@ -247,6 +275,18 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
           </Grid>
         </Grid>
       </Grid>
+      <Modal
+        open={pawnPromotionModalOpen}
+        onClose={handlePawnPromotionModalClose}
+      >
+        <div className={classes.paper}>
+          <PawnPromotion
+            move={autopatzerdMove.move}
+            setMove={setAutopatzerdMove}
+            handleModalClose={handlePawnPromotionModalClose}
+          />
+        </div>
+      </Modal>
     </Container>
   );
 };

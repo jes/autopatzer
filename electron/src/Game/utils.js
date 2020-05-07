@@ -12,7 +12,8 @@ export const loadPGN = (moves) => {
 export const moveToUCI = (board, move) => {
   const tempBoard = new Chess(board.fen());
   const moveDetails = tempBoard.move(move, { sloppy: true });
-  return `${moveDetails.from}${moveDetails.to}`;
+  const isPawnPromotion = moveDetails.flags.includes("p");
+  return [`${moveDetails.from}${moveDetails.to}`, isPawnPromotion];
 };
 
 export const transformPlayerDetails = (myUserId, white, black) => {
