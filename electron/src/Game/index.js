@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
+const Game = ({ myProfile, gameId }) => {
   const classes = useStyles();
 
   const autopatzerdSocketOptions = {
@@ -43,7 +43,7 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     shouldReconnect: () => true,
   };
 
-  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(
     autopatzerdHost,
     autopatzerdSocketOptions
   );
@@ -64,14 +64,21 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     players: null,
     board: new Chess(),
     timers: null,
+    resetSent: false,
   });
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
   const handlePawnPromotionModalClose = () => setPawnPromotionModalOpen(false);
 
+  const sendAutopatzerdMessage = (message) => {
+    logger.info({ event: `autopatzerd-${message.op}`, data: message });
+    sendJsonMessage(message);
+  };
+
   const handleBoardStreamEvent = (value) => {
     logger.info({ event: "lichess-board-stream", data: value });
     switch (value.type) {
+      // We get one gameFull when the event stream opens
       case "gameFull":
         setState({
           players: transformPlayerDetails(
@@ -82,12 +89,19 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
           board: loadPGN(value.state.moves),
           timers: getEndTimes(value.state.wtime, value.state.btime),
         });
+        sendAutopatzerdMessage({
+          op: "reset",
+          moves: loadPGN(value.state.moves).history(),
+        });
         break;
+      // Subsequent events are gameState
       case "gameState":
         setState((state) => ({
           ...state,
           board: loadPGN(value.moves),
           timers: getEndTimes(value.wtime, value.btime),
+          // Set on the first (and subsequent) gameState events, implies we've seen the gameFull message and sent a reset to autopatzerd with the game's full move history
+          resetSent: true,
         }));
         break;
       default:
@@ -137,19 +151,6 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
     }
   };
 
-  const sendAutopatzerdMessage = (message) => {
-    logger.info({ event: "autopatzerd-play", data: message });
-    sendJsonMessage(message);
-  };
-
-  useEffect(() => {
-    if (readyState === ReadyState.OPEN && resetAutopatzerd) {
-      const message = { op: "reset" };
-      logger.info({ event: "autopatzerd-reset", data: message });
-      sendJsonMessage.send(message);
-    }
-  }, [readyState, resetAutopatzerd, sendJsonMessage]);
-
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.op) {
       handleAutopatzerdMessage(lastJsonMessage);
@@ -158,13 +159,13 @@ const Game = ({ myProfile, gameId, resetAutopatzerd }) => {
 
   useEffect(() => {
     const moves = state.board.history();
-    if (moves.length) {
+    if (state.resetSent && moves.length) {
       sendAutopatzerdMessage({
         op: "play",
         move: moves.slice(-1)[0],
       });
     }
-  }, [state.board]);
+  }, [state.board, state.resetSent]);
 
   useEffect(() => {
     if (autopatzerdMove.move) {

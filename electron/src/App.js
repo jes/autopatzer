@@ -40,7 +40,6 @@ const App = () => {
   const [myProfile, setMyProfile] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [gamesInProgress, setGamesInProgress] = useState([]);
-  const [resetAutopatzerd, setResetAutopatzerd] = useState(false);
 
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
@@ -57,12 +56,11 @@ const App = () => {
     });
   }, []);
 
-  const startNewGame = (gameId, resetAutopatzerd) => {
-    setGameId(gameId);
-    setResetAutopatzerd(resetAutopatzerd);
+  const startNewGame = (gameId) => {
     if (modalOpen) {
       handleModalClose();
     }
+    setGameId(gameId);
   };
 
   const inProgressGamesList = gamesInProgress.map((g, index) => {
@@ -73,7 +71,7 @@ const App = () => {
       <ListItem
         button
         onClick={() => {
-          startNewGame(g.gameId, false);
+          startNewGame(g.gameId);
         }}
         key={g.gameId}
       >
@@ -119,7 +117,6 @@ const App = () => {
           </div>
         </Modal>
         {myProfile && gameId && <Game myProfile={myProfile} gameId={gameId} />}
-        {/* {myProfile && <Game myProfile={myProfile} gameId={"YL9PiEYN"} />} */}
       </Container>
     </div>
   );
