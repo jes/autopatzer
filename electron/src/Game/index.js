@@ -212,12 +212,12 @@ const Game = ({ myProfile, gameId }) => {
     <Container>
       <Grid container spacing={2}>
         <Grid item xs={6}>
-          <Grid item xs={12} key={playerOrder[0]}>
+          <Grid item xs={12} key={`details-${playerOrder[0]}`}>
             {state.players && (
               <PlayerDetails details={state.players[playerOrder[0]]} />
             )}
           </Grid>
-          <Grid item xs={12} key={playerOrder[0]}>
+          <Grid item xs={12} key={`timer-${playerOrder[0]}`}>
             {state.timers && (
               <Timer
                 board={state.board}
@@ -239,12 +239,12 @@ const Game = ({ myProfile, gameId }) => {
           )}
         </Grid>
         <Grid item xs={6}>
-          <Grid item xs={12} key={playerOrder[1]}>
+          <Grid item xs={12} key={`details-${playerOrder[1]}`}>
             {state.players && (
               <PlayerDetails details={state.players[playerOrder[1]]} />
             )}
           </Grid>
-          <Grid item xs={12} key={playerOrder[1]}>
+          <Grid item xs={12} key={`timer-${playerOrder[1]}`}>
             {state.timers && (
               <Timer
                 board={state.board}
