@@ -12,6 +12,10 @@ const Timer = ({ board, colour, endTime }) => {
       return false;
     }
 
+    if (board.game_over()) {
+      return false;
+    }
+
     if (board.turn() === colour.charAt(0)) {
       return true;
     }
