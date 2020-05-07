@@ -26,7 +26,7 @@ export const logger = winston.createLogger({
   transports: [
     new transports.Console(),
     new transports.File({
-      filename: `autopazterui-${Date.now()}.log`,
+      filename: `autopatzerui-${Date.now()}.log`,
       level: "info",
     }),
   ],
