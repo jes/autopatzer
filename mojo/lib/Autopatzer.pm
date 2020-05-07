@@ -71,6 +71,14 @@ sub read {
     return 1;
 }
 
+sub write {
+    my ($self, $line) = @_;
+
+    print " >>>> $line\n";
+    my $fh = $self->{fh};
+    print $fh "$line\n";
+}
+
 sub handle_data {
     my ($self, $data) = @_;
 
@@ -79,7 +87,7 @@ sub handle_data {
     while ($self->{buf} =~ s/^(.*?\n)//m) {
         my $line = $1;
         $line =~ s/[\r\n]//gm;
-        print "[[$line]]\n";
+        print " <<<< $line\n";
         $self->handle_line($line);
     }
 }
@@ -94,7 +102,6 @@ sub handle_line {
     if ($line =~ /^piece(up|down) (..)/) {
         my $up = $1 eq 'up' ? 1 : 0;
         my $sqr = $2;
-        print "Piece $up on $sqr\n";
         if ($up) {
             delete $self->{occupied}{$sqr};
         } else {
@@ -118,31 +125,6 @@ sub handle_line {
     $self->{cb}->($self) if $self->{cb} && $self->{ready};
 }
 
-sub adjust {
-    my ($self, $sqr) = @_;
-
-    my $fh = $self->{fh};
-
-    my ($x, $y) = square2XY($sqr);
-
-    print $fh "goto $x $y\nwait\n";
-    $self->blockUntil('waited');
-    print $fh "grab\n";
-
-    my $wiggle = 0.05;
-
-    for my $dir ([+1,+1], [+1,-1], [-1,-1], [-1,+1]) {
-        my ($dx,$dy) = @$dir;
-        print $fh "goto " . ($x+$wiggle*$dx) . " " . ($y+$wiggle*$dy) . "\nwait\n";
-        $self->blockUntil('waited');
-    }
-    print $fh "goto $x $y\nwait\n";
-    $self->blockUntil('waited');
-    print $fh "release\n";
-
-    $self->scan(1);
-}
-
 sub blockUntil {
     my ($self, $keyword) = @_;
 
@@ -157,7 +139,7 @@ sub scan {
     my ($self, $block) = @_;
     my $fh = $self->{fh};
 
-    print $fh "scan\n";
+    $self->write("scan");
 
     $self->blockUntil("occupied") if $block;
 }
@@ -249,13 +231,10 @@ sub movePiece {
         my ($cmd, $arg1, $arg2) = @$cmd;
         die "unknown cmd: $cmd" if $cmd !~ /^(goto|grab|release)$/;
         if ($cmd eq 'goto') {
-            print "goto $arg1 $arg2\n";
             $self->moveMotors($arg1,$arg2,1);
         } elsif ($cmd eq 'grab') {
-            print "grab\n";
             $self->grabMagnet();
         } elsif ($cmd eq 'release') {
-            print "release\n";
             $self->releaseMagnet();
         }
     }
@@ -276,7 +255,8 @@ sub moveMotors {
     my ($self, $x, $y, $block) = @_;
 
     my $fh = $self->{fh};
-    print $fh "goto $x $y\nwait\n";
+    $self->write("goto $x $y");
+    $self->write("wait");
     $self->blockUntil("waited") if $block;
     $self->{motorx} = $x;
     $self->{motory} = $y;
@@ -285,15 +265,13 @@ sub moveMotors {
 sub grabMagnet {
     my ($self) = @_;
 
-    my $fh = $self->{fh};
-    print $fh "grab\n";
+    $self->write("grab");
 }
 
 sub releaseMagnet {
     my ($self) = @_;
 
-    my $fh = $self->{fh};
-    print $fh "release\n";
+    $self->write("release");
 }
 
 sub moveShown {
@@ -316,9 +294,6 @@ sub moveShown {
 
     my $nlost = @lost;
     my $ngained = @gained;
-
-    print "lost: " . join(' ', @lost) . "\n";
-    print "gained: " . join(' ', @gained) . "\n";
 
     # 1 lost and 1 gained: normal move or pawn promotion
     # 1 lost and 0 gained: piece captured
