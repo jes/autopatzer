@@ -81,7 +81,7 @@ void scanHallSensors() {
       updateSteppers(); // HACK: don't let scanHallSensors() block stepper motor operation
       int sqr = squareMap[i*8+j];
       int val = analogRead(j);
-      bool occ = val > (analogThreshold[sqr] + 30);
+      bool occ = val > (analogThreshold[sqr] + 35);
       if (squareOccupied[sqr] != occ) {
         squareOccupied[sqr] = occ;
         lastChange[sqr] = millis();
