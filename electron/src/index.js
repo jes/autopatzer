@@ -7,3 +7,6 @@ ReactDOM.render(
   <App />,
   document.getElementById('root')
 );
+
+if (process.env.REACT_APP_HIDE_CURSOR == "1")
+    document.getElementById('root').style.cursor = "none";
