@@ -32,11 +32,12 @@ export const challengeAI = (level, time, colour) => {
     });
 };
 
-export const createSeek = (time, colour) => {
+export const createSeek = (time, colour, rated) => {
   var formData = new FormData();
   formData.append("time", time.time);
   formData.append("increment", time.increment);
   formData.append("color", colour);
+  formData.append("rated", rated);
 
   return fetch(`${lichessApiEndpoint}/board/seek`, {
     headers: headers,

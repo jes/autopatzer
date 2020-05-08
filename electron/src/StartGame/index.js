@@ -14,6 +14,7 @@ import TimeControl from "./components/TimeControl";
 import ColourControl from "./components/ColourControl";
 import AILevelControl from "./components/AILevelControl";
 import { createSeek, challengeAI, getEventStream } from "../lichess";
+import RatedControl from "./components/RatedControl";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -38,6 +39,7 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
   const classes = useStyles();
   const [time, setTime] = useState({ time: 15, increment: 10 });
   const [colour, setColour] = useState("random");
+  const [rated, setRated] = useState(false);
   const [aiLevel, setAILevel] = useState(1);
   const [findingGame, setFindingGame] = useState(false);
   const [findingAIGame, setFindingAIGame] = useState(false);
@@ -83,6 +85,9 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
           <ColourControl colour={colour} setColour={setColour} />
         </Grid>
         <Grid item xs={12}>
+          <RatedControl rated={rated} setRated={setRated} />
+        </Grid>
+        <Grid item xs={12}>
           <Divider />
         </Grid>
         <Grid item xs={12}>
@@ -99,7 +104,7 @@ const StartGame = ({ gamesInProgress, startNewGame }) => {
               disabled={findingGame}
               onClick={() => {
                 setFindingGame(true);
-                createSeek(time, colour);
+                createSeek(time, colour, rated);
               }}
             >
               {findingGame ? "Seeking Opponent" : "Seek Opponent"}
