@@ -4,19 +4,18 @@ import {
   Modal,
   Button,
   Grid,
-  List,
-  ListItem,
-  ListItemText,
   Box,
+  Divider,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import "./App.css";
 import Game from "./Game";
 import StartGame from "./StartGame";
+import GamesInProgress from "./components/GamesInProgress";
 import { getProfile, getNowPlaying } from "./lichess";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   modal: {
     position: "absolute",
     width: "90%",
@@ -59,50 +58,35 @@ const App = () => {
     setGameId(gameId);
   };
 
-  const inProgressGamesList = gamesInProgress.map((g, index) => {
-    const matchString = `${index}. ${g.isMyTurn ? "Your" : "Their"} move in ${
-      g.variant.name
-    } (${g.speed}) against ${g.opponent.username} (${g.gameId})`;
-    return (
-      <ListItem
-        button
-        onClick={() => {
-          startNewGame(g.gameId);
-        }}
-        key={g.gameId}
-      >
-        <ListItemText primary={matchString}></ListItemText>
-      </ListItem>
-    );
-  });
-
   return (
     <div className="App">
       <Container>
         {!gameId && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Box textAlign="center" fontWeight="fontWeightBold">
-                Games In-Progress
-              </Box>
-              <List>{gamesInProgress && inProgressGamesList}</List>
+          <Box p={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth={true}
+                  onClick={handleModalOpen}
+                >
+                  Find a New Game
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <Divider variant="middle" />
+              </Grid>
+              {gamesInProgress.length > 0 && (
+                <Grid item xs={12}>
+                  <GamesInProgress
+                    gamesInProgress={gamesInProgress}
+                    startNewGame={startNewGame}
+                  />
+                </Grid>
+              )}
             </Grid>
-            <Grid item xs={12}>
-              <Box textAlign="center" fontWeight="fontWeightBold">
-                OR
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth={true}
-                onClick={handleModalOpen}
-              >
-                Find a New Game
-              </Button>
-            </Grid>
-          </Grid>
+          </Box>
         )}
         <Modal open={modalOpen} onClose={handleModalClose}>
           <Box className={classes.modal} p={2}>
