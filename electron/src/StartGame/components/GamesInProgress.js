@@ -14,9 +14,8 @@ import {
   Typography,
 } from "@material-ui/core";
 
-const GamesInProgress = ({ gamesInProgress, startNewGame }) => {
+const GamesInProgress = ({ gamesInProgress, startGame }) => {
   const gamesInProgrssListItems = gamesInProgress.map((g, index) => {
-    console.log(g);
     const turn = g.isMyTurn ? "Your move" : "Their move";
     const gameType = `${g.variant.name} (${g.speed})`;
     const opponent = g.opponent.ai
@@ -27,7 +26,7 @@ const GamesInProgress = ({ gamesInProgress, startNewGame }) => {
       <ListItem
         button
         onClick={() => {
-          startNewGame(g.gameId);
+          startGame(g.gameId);
         }}
         key={g.gameId}
       >

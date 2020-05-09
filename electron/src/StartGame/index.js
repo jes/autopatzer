@@ -1,139 +1,79 @@
 import React, { useState, useEffect } from "react";
 
-import {
-  Container,
-  Grid,
-  Button,
-  CircularProgress,
-  Divider,
-} from "@material-ui/core";
+import { Box, Grid, Button, Divider, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { green } from "@material-ui/core/colors";
 
-import TimeControl from "./components/TimeControl";
-import ColourControl from "./components/ColourControl";
-import AILevelControl from "./components/AILevelControl";
-import { createSeek, challengeAI, getEventStream } from "../lichess";
-import RatedControl from "./components/RatedControl";
+import { getNowPlaying } from "../lichess";
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: "flex",
-    alignItems: "center",
-  },
-  wrapper: {
-    margin: theme.spacing(1),
-    position: "relative",
-  },
-  buttonProgress: {
-    color: green[500],
+import GamesInProgress from "./components/GamesInProgress";
+import FindGame from "./components/FindGame";
+
+const useStyles = makeStyles(() => ({
+  modal: {
     position: "absolute",
+    width: "90%",
     top: "50%",
     left: "50%",
-    marginTop: -12,
-    marginLeft: -12,
+    transform: `translate(-50%, -50%)`,
+    backgroundColor: "#fff",
+    border: "1px solid #000",
+    outline: 0,
   },
 }));
 
-const StartGame = ({ gamesInProgress, startNewGame }) => {
+const StartGame = ({ setGameId }) => {
   const classes = useStyles();
-  const [time, setTime] = useState({ time: 15, increment: 10 });
-  const [colour, setColour] = useState("random");
-  const [rated, setRated] = useState(false);
-  const [aiLevel, setAILevel] = useState(1);
-  const [findingGame, setFindingGame] = useState(false);
-  const [findingAIGame, setFindingAIGame] = useState(false);
 
-  const getNewGameId = (gamesInProgress, startNewGame) => {
-    getEventStream().then((stream) => {
-      let read;
-      const reader = stream.getReader();
-      reader.read().then(
-        (read = ({ done, value }) => {
-          if (done && done === true) {
-            return;
-          }
+  const [modalOpen, setModalOpen] = useState(false);
+  const [gamesInProgress, setGamesInProgress] = useState([]);
 
-          if (value.type && value.type === "gameStart") {
-            if (!gamesInProgress.includes(value.game.id)) {
-              reader.cancel(`Got gameId ${value.game.id}`);
-              setFindingGame(false);
-              startNewGame(value.game.id, true);
-            }
-          }
-
-          return reader.read().then(read);
-        })
-      );
-    });
-  };
+  const handleModalOpen = () => setModalOpen(true);
+  const handleModalClose = () => setModalOpen(false);
 
   useEffect(() => {
-    getNewGameId(
-      gamesInProgress.map((g) => g.gameId),
-      startNewGame
-    );
-  }, [gamesInProgress, startNewGame]);
+    getNowPlaying().then(({ nowPlaying }) => {
+      setGamesInProgress(nowPlaying);
+    });
+  }, []);
+
+  const startGame = (gameId) => {
+    if (modalOpen) {
+      handleModalClose();
+    }
+    setGameId(gameId);
+  };
 
   return (
-    <Container>
-      <Grid container spacing={3}>
+    <Box p={2}>
+      <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TimeControl time={time} setTime={setTime} />
-        </Grid>
-        <Grid item xs={12}>
-          <ColourControl colour={colour} setColour={setColour} />
-        </Grid>
-        <Grid item xs={12}>
-          <RatedControl rated={rated} setRated={setRated} />
-        </Grid>
-        <Grid item xs={12}>
-          <Divider />
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth={true}
+            onClick={handleModalOpen}
+          >
+            Find a New Game
+          </Button>
         </Grid>
         <Grid item xs={12}>
-          <AILevelControl aiLevel={aiLevel} setAILevel={setAILevel} />
+          <Divider variant="middle" />
         </Grid>
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
-        <Grid item xs={6}>
-          <div className={classes.wrapper}>
-            <Button
-              variant="contained"
-              fullWidth={true}
-              disabled={findingGame}
-              onClick={() => {
-                setFindingGame(true);
-                createSeek(time, colour, rated);
-              }}
-            >
-              {findingGame ? "Seeking Opponent" : "Seek Opponent"}
-            </Button>
-            {findingGame && (
-              <CircularProgress size={24} className={classes.buttonProgress} />
-            )}
-          </div>
-        </Grid>
-        <Grid item xs={6}>
-          <div className={classes.wrapper}>
-            <Button
-              variant="contained"
-              fullWidth={true}
-              disabled={findingAIGame}
-              onClick={() => {
-                setFindingAIGame(true);
-                challengeAI(aiLevel, time, colour);
-              }}
-            >
-              {findingAIGame ? "Starting AI Game" : "Challenge AI"}
-            </Button>
-            {findingAIGame && (
-              <CircularProgress size={24} className={classes.buttonProgress} />
-            )}
-          </div>
-        </Grid>
+        {gamesInProgress.length > 0 && (
+          <Grid item xs={12}>
+            <GamesInProgress
+              gamesInProgress={gamesInProgress}
+              startGame={startGame}
+            />
+          </Grid>
+        )}
       </Grid>
-    </Container>
+      <Modal open={modalOpen} onClose={handleModalClose}>
+        <Box className={classes.modal} p={2}>
+          <FindGame gamesInProgress={gamesInProgress} startGame={startGame} />
+        </Box>
+      </Modal>
+    </Box>
   );
 };
 
