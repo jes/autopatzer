@@ -114,6 +114,8 @@ websocket '/ws' => sub {
                 } else {
                     $ap->moveWithMotors($msg->{move});
                 }
+            } elsif ($msg->{op} eq 'wiggle') {
+                $ap->wiggle;
             } elsif ($msg->{op} eq 'ping') {
                 # do nothing
             } else {

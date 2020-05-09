@@ -58,6 +58,13 @@ resetting the pieces.
 If "moves" is present, then Mojolicious app will play through those moves after resetting to the
 start state.
 
+### Wiggle the motors to make a noise to alert the user
+
+    {"op":"wiggle"}
+
+This will cause the motors to be moved back and forth briefly, to make a noise, to alert the user.
+It should (only?) be sent when we've received gameFull and the user is playing white.
+
 ### Ping
 
     {"op":"ping"}

@@ -87,16 +87,25 @@ const PlayGame = ({ myProfile, gameId }) => {
           op: "reset",
           moves: moves,
         });
+        let players = transformPlayerDetails(
+          myProfile.id,
+          value.white,
+          value.black
+        );
         setState({
-          players: transformPlayerDetails(
-            myProfile.id,
-            value.white,
-            value.black
-          ),
+          players: players,
           board: loadPGN(value.state.moves),
           timers: getEndTimes(value.state.wtime, value.state.btime),
           sentMoves: moves,
         });
+        let iAmWhite = players.white.opponent == false;
+        let whiteToMove = (moves.length % 2) == 0;
+        if (iAmWhite == whiteToMove) {
+          // if the player is to move, send a wiggle to wake up the user as it is his turn to move
+          sendAutopatzerdMessage({
+            op: "wiggle",
+          });
+        }
         break;
       // Subsequent events are gameState
       case "gameState":

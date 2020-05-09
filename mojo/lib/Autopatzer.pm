@@ -241,6 +241,19 @@ sub movePiece {
     $self->releaseMagnet();
 }
 
+# move the X motor back and forth to make a noise
+sub wiggle {
+    my ($self) = @_;
+
+    my $pos1 = $self->{motorx};
+    my $pos2 = $pos1 < 4 ? $pos1+1 : $pos1-1;
+
+    for (1..2) {
+        $self->moveMotors($pos2, $self->{motory}, 1);
+        $self->moveMotors($pos1, $self->{motory}, 1);
+    }
+}
+
 # e.g. exf3 is an en-passant capture of the pawn on f4
 # so $self->enPassantSquare('f3') == 'f4'
 sub enPassantSquare {

@@ -80,6 +80,8 @@ websocket '/ws' => sub {
                 $game->go_move($msg->{move});
                 $mymove = !$mymove;
                 $my_move->() if $mymove;
+            } elsif ($msg->{op} eq 'wiggle') {
+                print "Wiggle wiggle wiggle wiggle wiggle.\n";
             } elsif ($msg->{op} eq 'ping') {
                 # do nothing
             } else {
