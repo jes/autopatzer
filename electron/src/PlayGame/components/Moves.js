@@ -13,16 +13,16 @@ const Moves = ({ board }) => {
           fontWeight="fontWeightMedium"
           fontSize={17}
           color="text.disabled"
-          minWidth={20}
+          minWidth={30}
           textAlign="right"
-          mr={2}
+          mr={5}
         >
           {index + 1}
         </Box>
-        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={100}>
+        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={120}>
           {turn[0]}
         </Box>
-        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={100}>
+        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={120}>
           {turn[1]}
         </Box>
       </ListItem>
