@@ -85,12 +85,10 @@ const Home = ({ setGameId }) => {
         </Grid>
         <Grid item xs={12}>
           <Box height="320px">
-            {gamesInProgress.length > 0 && (
-              <GamesInProgress
-                gamesInProgress={gamesInProgress}
-                startGame={startGame}
-              />
-            )}
+            <GamesInProgress
+              gamesInProgress={gamesInProgress}
+              startGame={startGame}
+            />
           </Box>
         </Grid>
         <Grid item xs={12}>

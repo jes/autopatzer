@@ -51,7 +51,7 @@ const GamesInProgress = ({ gamesInProgress, startGame }) => {
         <Typography variant="h6" align="center">
           {gamesInProgressListItems.length === 0
             ? "No Existing Games"
-            : "Or Resume an Existing Game"}
+            : "Resume an Existing Game"}
         </Typography>
       </Grid>
       {gamesInProgressListItems.length !== 0 && (
