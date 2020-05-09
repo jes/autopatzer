@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+import { exec } from "child_process";
+
 import { Box, Grid, Button, Divider, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
@@ -21,14 +23,24 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const StartGame = ({ setGameId }) => {
+const Home = ({ setGameId }) => {
   const classes = useStyles();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [gamesInProgress, setGamesInProgress] = useState([]);
+  const [ip, setIP] = useState(null);
 
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
+
+  useEffect(() => {
+    exec(
+      "ip route get 1 | head -n1 | sed 's/.* src //' | sed 's/ .*//'",
+      (error, stdout, stderr) => {
+        setIP(stdout);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     getNowPlaying().then(({ nowPlaying }) => {
@@ -59,14 +71,24 @@ const StartGame = ({ setGameId }) => {
         <Grid item xs={12}>
           <Divider variant="middle" />
         </Grid>
-        {gamesInProgress.length > 0 && (
-          <Grid item xs={12}>
-            <GamesInProgress
-              gamesInProgress={gamesInProgress}
-              startGame={startGame}
-            />
-          </Grid>
-        )}
+        <Grid item xs={12}>
+          <Box height="320px">
+            {gamesInProgress.length > 0 && (
+              <GamesInProgress
+                gamesInProgress={gamesInProgress}
+                startGame={startGame}
+              />
+            )}
+          </Box>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider variant="middle" />
+        </Grid>
+        <Grid item xs={12}>
+          <Box textAlign="center" fontFamily="monospace" fontSize="h6.fontSize">
+            {ip}
+          </Box>
+        </Grid>
       </Grid>
       <Modal open={modalOpen} onClose={handleModalClose}>
         <Box className={classes.modal} p={2}>
@@ -77,4 +99,4 @@ const StartGame = ({ setGameId }) => {
   );
 };
 
-export default StartGame;
+export default Home;

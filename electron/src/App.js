@@ -4,7 +4,7 @@ import { getProfile } from "./lichess";
 
 import "./App.css";
 
-import StartGame from "./StartGame";
+import Home from "./Home";
 import PlayGame from "./PlayGame";
 import Loading from "./Loading";
 
@@ -20,7 +20,7 @@ const App = () => {
 
   if (myProfile) {
     if (!gameId) {
-      return <StartGame setGameId={setGameId} />;
+      return <Home setGameId={setGameId} />;
     }
     {
       return <PlayGame myProfile={myProfile} gameId={gameId} />;

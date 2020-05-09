@@ -15,7 +15,7 @@ import {
 } from "@material-ui/core";
 
 const GamesInProgress = ({ gamesInProgress, startGame }) => {
-  const gamesInProgrssListItems = gamesInProgress.map((g, index) => {
+  const gamesInProgressListItems = gamesInProgress.map((g, index) => {
     const turn = g.isMyTurn ? "Your move" : "Their move";
     const gameType = `${g.variant.name} (${g.speed})`;
     const opponent = g.opponent.ai
@@ -46,15 +46,21 @@ const GamesInProgress = ({ gamesInProgress, startGame }) => {
   });
 
   return (
-    <Grid container spacing={2}>
+    <Grid item container xs={12} spacing={2}>
       <Grid item xs={12}>
         <Typography variant="h6" align="center">
-          Or Resume an Existing Game
+          {gamesInProgressListItems.length === 0
+            ? "No Existing Games"
+            : "Or Resume an Existing Game"}
         </Typography>
-        <Box p={2} height="260px" overflow="auto">
-          <List disablePadding={true}>{gamesInProgrssListItems}</List>
-        </Box>
       </Grid>
+      {gamesInProgressListItems.length !== 0 && (
+        <Grid item xs={12}>
+          <Box height="280px" overflow="auto">
+            <List disablePadding={true}>{gamesInProgressListItems}</List>
+          </Box>
+        </Grid>
+      )}
     </Grid>
   );
 };
