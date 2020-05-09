@@ -98,9 +98,9 @@ const PlayGame = ({ myProfile, gameId }) => {
           timers: getEndTimes(value.state.wtime, value.state.btime),
           sentMoves: moves,
         });
-        let iAmWhite = players.white.opponent == false;
-        let whiteToMove = (moves.length % 2) == 0;
-        if (iAmWhite == whiteToMove) {
+        let iAmWhite = players.white.opponent === false;
+        let whiteToMove = (moves.length % 2) === 0;
+        if (iAmWhite === whiteToMove) {
           // if the player is to move, send a wiggle to wake up the user as it is his turn to move
           sendAutopatzerdMessage({
             op: "wiggle",
