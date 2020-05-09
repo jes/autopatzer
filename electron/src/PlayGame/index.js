@@ -10,6 +10,7 @@ import Moves from "./components/Moves";
 import ConfirmMove from "./components/ConfirmMove";
 import Timer from "./components/Timer";
 import PawnPromotion from "./components/PawnPromotion";
+import Loading from "../Loading";
 
 import { getBoardEventStream, makeBoardMove } from "../lichess";
 import {
@@ -223,83 +224,85 @@ const PlayGame = ({ myProfile, gameId }) => {
     });
   }, [gameId]);
 
-  return (
-    <Box p={2}>
-      <Grid container spacing={2}>
-        <Grid container item xs={12} spacing={2}>
-          {playerOrder.map((p) => {
-            return (
-              <Grid item xs={6} key={`details-${p}`}>
-                {state.players && <PlayerDetails details={state.players[p]} />}
-              </Grid>
-            );
-          })}
-        </Grid>
-        <Grid container item xs={12} spacing={2}>
-          {playerOrder.map((p) => {
-            return (
-              <Grid item xs={6} key={`timer-${p}`}>
-                {state.timers && (
+  if (!state.players) {
+    return <Loading />;
+  } else {
+    return (
+      <Box p={2}>
+        <Grid container spacing={2}>
+          <Grid container item xs={12} spacing={2}>
+            {playerOrder.map((p) => {
+              return (
+                <Grid item xs={6} key={`details-${p}`}>
+                  <PlayerDetails details={state.players[p]} />
+                </Grid>
+              );
+            })}
+          </Grid>
+          <Grid container item xs={12} spacing={2}>
+            {playerOrder.map((p) => {
+              return (
+                <Grid item xs={6} key={`timer-${p}`}>
                   <Timer
                     board={state.board}
                     endTime={state.timers[p]}
                     colour={p}
                   />
+                </Grid>
+              );
+            })}
+          </Grid>
+          <Grid container item xs={12} spacing={2}>
+            <Grid item xs={6}>
+              <Moves board={state.board} />
+            </Grid>
+            <Grid item xs={6}>
+              {autopatzerdMove.move && !autopatzerdMove.confirmed && (
+                <Grid item xs={12}>
+                  <ConfirmMove
+                    autopatzerdMove={autopatzerdMove}
+                    setAutopatzerdMove={setAutopatzerdMove}
+                  />
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                {boardChanges.gained.length !== 0 && (
+                  <Container>
+                    <Box m={2} align="center" text-align="center" color="green">
+                      Gained:
+                      {boardChanges.gained.join(", ")}
+                    </Box>
+                  </Container>
                 )}
               </Grid>
-            );
-          })}
-        </Grid>
-        <Grid container item xs={12} spacing={2}>
-          <Grid item xs={6}>
-            {state.board && <Moves board={state.board} />}
-          </Grid>
-          <Grid item xs={6}>
-            {autopatzerdMove.move && !autopatzerdMove.confirmed && (
               <Grid item xs={12}>
-                <ConfirmMove
-                  autopatzerdMove={autopatzerdMove}
-                  setAutopatzerdMove={setAutopatzerdMove}
-                />
+                {boardChanges.lost.length !== 0 && (
+                  <Container>
+                    <Box m={2} align="center" text-align="center" color="red">
+                      Lost:
+                      {boardChanges.lost.join(", ")}
+                    </Box>
+                  </Container>
+                )}
               </Grid>
-            )}
-            <Grid item xs={12}>
-              {boardChanges.gained.length !== 0 && (
-                <Container>
-                  <Box m={2} align="center" text-align="center" color="green">
-                    Gained:
-                    {boardChanges.gained.join(", ")}
-                  </Box>
-                </Container>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              {boardChanges.lost.length !== 0 && (
-                <Container>
-                  <Box m={2} align="center" text-align="center" color="red">
-                    Lost:
-                    {boardChanges.lost.join(", ")}
-                  </Box>
-                </Container>
-              )}
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
-      <Modal
-        open={pawnPromotionModalOpen}
-        onClose={handlePawnPromotionModalClose}
-      >
-        <div className={classes.paper}>
-          <PawnPromotion
-            move={autopatzerdMove.move}
-            setMove={setAutopatzerdMove}
-            handleModalClose={handlePawnPromotionModalClose}
-          />
-        </div>
-      </Modal>
-    </Box>
-  );
+        <Modal
+          open={pawnPromotionModalOpen}
+          onClose={handlePawnPromotionModalClose}
+        >
+          <div className={classes.paper}>
+            <PawnPromotion
+              move={autopatzerdMove.move}
+              setMove={setAutopatzerdMove}
+              handleModalClose={handlePawnPromotionModalClose}
+            />
+          </div>
+        </Modal>
+      </Box>
+    );
+  }
 };
 
 export default PlayGame;
