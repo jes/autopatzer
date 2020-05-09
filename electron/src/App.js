@@ -35,9 +35,15 @@ const App = () => {
   const [myProfile, setMyProfile] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [gamesInProgress, setGamesInProgress] = useState([]);
+  const [ip, setIP] = useState(null);
 
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
+
+  const { exec } = require('child_process');
+  exec('ip route get 1 | head -n1 | sed \'s/.* src //\' | sed \'s/ .*//\'', (error, stdout, stderr) => {
+    setIP(stdout);
+  });
 
   useEffect(() => {
     getProfile().then((profile) => {
@@ -85,6 +91,7 @@ const App = () => {
                   />
                 </Grid>
               )}
+              <Grid item>{ip}</Grid>
             </Grid>
           </Box>
         )}
