@@ -63,6 +63,11 @@ const Home = ({ setGameId }) => {
     setGameId(gameId);
   };
 
+  const shutdown =() => {
+    exec("./poweroff");
+    require('electron').remote.getCurrentWindow().close();
+  };
+
   return (
     <Box p={2}>
       <Grid container spacing={2}>
@@ -80,7 +85,7 @@ const Home = ({ setGameId }) => {
           <Divider variant="middle" />
         </Grid>
         <Grid item xs={12}>
-          <Box height="320px">
+          <Box height="310px">
             <GamesInProgress
               gamesInProgress={gamesInProgress}
               startGame={startGame}
@@ -90,10 +95,18 @@ const Home = ({ setGameId }) => {
         <Grid item xs={12}>
           <Divider variant="middle" />
         </Grid>
-        <Grid item xs={12}>
-          <Box textAlign="center" fontFamily="monospace" fontSize="h6.fontSize">
+        <Grid item xs={6}>
+          <Box textAlign="left" fontFamily="monospace" fontSize="h6.fontSize">
             {ip}
           </Box>
+        </Grid>
+        <Grid item xs={6} justify="flex-end" direction="row">
+          <Button
+            variant="contained"
+            onClick={shutdown}
+          >
+            Power off
+          </Button>
         </Grid>
       </Grid>
       <Modal open={modalOpen} onClose={handleModalClose}>
