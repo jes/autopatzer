@@ -12,7 +12,7 @@ const Moves = ({ board }) => {
         <Box
           display="inline"
           fontWeight="fontWeightMedium"
-          fontSize={13}
+          fontSize={17}
           color="text.disabled"
           minWidth={20}
           textAlign="right"
@@ -20,7 +20,7 @@ const Moves = ({ board }) => {
         >
           {index + 1}
         </Box>
-        <Box display="inline" fontFamily="Monospace" fontSize={16}>
+        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22}>
           {turn}
         </Box>
       </ListItem>
@@ -30,7 +30,7 @@ const Moves = ({ board }) => {
   return (
     <Box height="280px" overflow="auto" boxShadow={1}>
       <ScrollableFeed forceScroll={true}>
-        <List disablePadding={true}>{turnListItems}</List>
+        <List>{turnListItems}</List>
       </ScrollableFeed>
     </Box>
   );
