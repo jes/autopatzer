@@ -25,6 +25,7 @@ const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove }) => {
             fullWidth={true}
             disableElevation
             className={classes.button}
+            size="large"
             onClick={() =>
               setAutopatzerdMove({
                 move: autopatzerdMove.move,
@@ -32,7 +33,7 @@ const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove }) => {
               })
             }
           >
-            CONFIRM: {autopatzerdMove.move}
+            {autopatzerdMove.move}
           </Button>
         </MuiThemeProvider>
       </Box>
