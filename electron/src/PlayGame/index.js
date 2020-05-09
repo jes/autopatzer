@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
 
 import { Container, Grid, Box, Modal } from "@material-ui/core";

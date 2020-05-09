@@ -21,8 +21,7 @@ const App = () => {
   if (myProfile) {
     if (!gameId) {
       return <Home setGameId={setGameId} />;
-    }
-    {
+    } else {
       return <PlayGame myProfile={myProfile} gameId={gameId} />;
     }
   } else {

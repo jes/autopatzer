@@ -1,7 +1,7 @@
 import React from "react";
 import chunk from "lodash/chunk";
 
-import { Container, List, ListItem, Box } from "@material-ui/core";
+import { List, ListItem, Box } from "@material-ui/core";
 import ScrollableFeed from "react-scrollable-feed";
 
 const Moves = ({ board }) => {
