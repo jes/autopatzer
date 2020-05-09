@@ -92,12 +92,17 @@ const App = () => {
                 <Divider variant="middle" />
               </Grid>
               {gamesInProgress.length > 0 && (
+                <>
                 <Grid item xs={12}>
                   <GamesInProgress
                     gamesInProgress={gamesInProgress}
                     startNewGame={startNewGame}
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <Divider variant="middle" />
+                </Grid>
+                </>
               )}
               <Grid item>{ip}</Grid>
             </Grid>
