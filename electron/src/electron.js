@@ -23,6 +23,7 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
     },
+    fullscreen: process.env.ELECTRON_FULLSCREEN == '1' ? true : false,
   });
 
   mainWindow.loadURL(startUrl);
