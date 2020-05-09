@@ -1,8 +1,10 @@
 import React, { useEffect, useCallback, useRef } from "react";
 
+import "typeface-anonymous-pro";
+
 import Countdown from "react-countdown";
 
-import { Box, Container } from "@material-ui/core";
+import { Box, Typography } from "@material-ui/core";
 
 const Timer = ({ board, colour, endTime }) => {
   const counter = useRef();
@@ -32,8 +34,8 @@ const Timer = ({ board, colour, endTime }) => {
   }, [counter, board, colour, isTicking]);
 
   return (
-    <Container>
-      <Box m={2} align="center" text-align="center" border={1}>
+    <Box align="center" text-align="center" boxShadow={1}>
+      <Typography variant="h2" style={{ fontFamily: "Anonymous Pro" }}>
         <Countdown
           key={endTime}
           date={endTime.toDate()}
@@ -43,8 +45,8 @@ const Timer = ({ board, colour, endTime }) => {
           daysInHours={true}
           ref={counter}
         />
-      </Box>
-    </Container>
+      </Typography>
+    </Box>
   );
 };
 

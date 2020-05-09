@@ -3,8 +3,9 @@ import React from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { lightGreen, grey } from "@material-ui/core/colors";
 
-import Online from "@material-ui/icons/FiberManualRecord";
-import Offline from "@material-ui/icons/FiberManualRecordOutlined";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircle as faCircleSolid } from "@fortawesome/free-solid-svg-icons";
+import { faCircle as faCircleRegular } from "@fortawesome/free-regular-svg-icons";
 
 const useStyles = makeStyles(() => ({
   online: {
@@ -19,9 +20,9 @@ const PlayerOnline = ({ online }) => {
   const classes = useStyles();
 
   return online ? (
-    <Online className={classes.online} />
+    <FontAwesomeIcon icon={faCircleSolid} className={classes.online} />
   ) : (
-    <Offline className={classes.offline} />
+    <FontAwesomeIcon icon={faCircleRegular} className={classes.offline} />
   );
 };
 

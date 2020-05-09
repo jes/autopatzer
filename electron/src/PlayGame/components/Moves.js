@@ -28,13 +28,11 @@ const Moves = ({ board }) => {
   });
 
   return (
-    <Container>
-      <Box m={2} height="280px" overflow="auto" border={1}>
-        <ScrollableFeed forceScroll={true}>
-          <List disablePadding={true}>{turnListItems}</List>
-        </ScrollableFeed>
-      </Box>
-    </Container>
+    <Box height="280px" overflow="auto" boxShadow={1}>
+      <ScrollableFeed forceScroll={true}>
+        <List disablePadding={true}>{turnListItems}</List>
+      </ScrollableFeed>
+    </Box>
   );
 };
 

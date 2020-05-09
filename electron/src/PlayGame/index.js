@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Game = ({ myProfile, gameId }) => {
+const PlayGame = ({ myProfile, gameId }) => {
   const classes = useStyles();
 
   const autopatzerdSocketOptions = {
@@ -224,69 +224,65 @@ const Game = ({ myProfile, gameId }) => {
   }, [gameId]);
 
   return (
-    <Container>
+    <Box p={2}>
       <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Grid item xs={12} key={`details-${playerOrder[0]}`}>
-            {state.players && (
-              <PlayerDetails details={state.players[playerOrder[0]]} />
-            )}
-          </Grid>
-          <Grid item xs={12} key={`timer-${playerOrder[0]}`}>
-            {state.timers && (
-              <Timer
-                board={state.board}
-                colour={playerOrder[0]}
-                endTime={state.timers[playerOrder[0]]}
-              />
-            )}
-          </Grid>
-          <Grid item xs={12}>
+        <Grid container item xs={12} spacing={2}>
+          {playerOrder.map((p) => {
+            return (
+              <Grid item xs={6} key={`details-${p}`}>
+                {state.players && <PlayerDetails details={state.players[p]} />}
+              </Grid>
+            );
+          })}
+        </Grid>
+        <Grid container item xs={12} spacing={2}>
+          {playerOrder.map((p) => {
+            return (
+              <Grid item xs={6} key={`timer-${p}`}>
+                {state.timers && (
+                  <Timer
+                    board={state.board}
+                    endTime={state.timers[p]}
+                    colour={p}
+                  />
+                )}
+              </Grid>
+            );
+          })}
+        </Grid>
+        <Grid container item xs={12} spacing={2}>
+          <Grid item xs={6}>
             {state.board && <Moves board={state.board} />}
           </Grid>
-          {autopatzerdMove.move && !autopatzerdMove.confirmed && (
+          <Grid item xs={6}>
+            {autopatzerdMove.move && !autopatzerdMove.confirmed && (
+              <Grid item xs={12}>
+                <ConfirmMove
+                  autopatzerdMove={autopatzerdMove}
+                  setAutopatzerdMove={setAutopatzerdMove}
+                />
+              </Grid>
+            )}
             <Grid item xs={12}>
-              <ConfirmMove
-                autopatzerdMove={autopatzerdMove}
-                setAutopatzerdMove={setAutopatzerdMove}
-              />
+              {boardChanges.gained.length !== 0 && (
+                <Container>
+                  <Box m={2} align="center" text-align="center" color="green">
+                    Gained:
+                    {boardChanges.gained.join(", ")}
+                  </Box>
+                </Container>
+              )}
             </Grid>
-          )}
-        </Grid>
-        <Grid item xs={6}>
-          <Grid item xs={12} key={`details-${playerOrder[1]}`}>
-            {state.players && (
-              <PlayerDetails details={state.players[playerOrder[1]]} />
-            )}
-          </Grid>
-          <Grid item xs={12} key={`timer-${playerOrder[1]}`}>
-            {state.timers && (
-              <Timer
-                board={state.board}
-                colour={playerOrder[1]}
-                endTime={state.timers[playerOrder[1]]}
-              />
-            )}
-          </Grid>
-          <Grid item xs={12}>
-            {boardChanges.gained.length !== 0 && (
-              <Container>
-                <Box m={2} align="center" text-align="center" color="green">
-                  Gained:
-                  {boardChanges.gained.join(", ")}
-                </Box>
-              </Container>
-            )}
-          </Grid>
-          <Grid item xs={12}>
-            {boardChanges.lost.length !== 0 && (
-              <Container>
-                <Box m={2} align="center" text-align="center" color="red">
-                  Lost:
-                  {boardChanges.lost.join(", ")}
-                </Box>
-              </Container>
-            )}
+            <Grid item xs={12}>
+              {boardChanges.lost.length !== 0 && (
+                <Container>
+                  <Box m={2} align="center" text-align="center" color="red">
+                    Lost:
+                    {boardChanges.lost.join(", ")}
+                  </Box>
+                </Container>
+              )}
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
@@ -302,8 +298,8 @@ const Game = ({ myProfile, gameId }) => {
           />
         </div>
       </Modal>
-    </Container>
+    </Box>
   );
 };
 
-export default Game;
+export default PlayGame;

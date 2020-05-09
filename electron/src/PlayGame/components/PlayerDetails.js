@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Grid } from "@material-ui/core";
+import { Box, Grid, Typography } from "@material-ui/core";
 
 import PlayerOnline from "./PlayerOnline";
 import { getPlayerStatus } from "../../lichess";
@@ -23,25 +23,25 @@ const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
   }, [id, aiLevel]);
 
   return (
-    <Container>
-      <Box m={2} border={1} textAlign={colour === "white" ? "right" : "left"}>
-        <Grid
-          container
-          spacing={2}
-          direction={colour === "white" ? "row" : "row-reverse"}
-        >
-          <Grid item xs={2}>
+    <Box p={2} textAlign={colour === "white" ? "right" : "left"} boxShadow={1}>
+      <Grid
+        container
+        spacing={2}
+        direction={colour === "white" ? "row" : "row-reverse"}
+      >
+        <Grid item xs={2}>
+          <Typography variant="h6">
             <PlayerOnline online={aiLevel ? true : online} />
-          </Grid>
-          <Grid item xs={4}>
-            {aiLevel ? aiLevel : rating}
-          </Grid>
-          <Grid item xs={6}>
-            {aiLevel ? "Stockfish level " + aiLevel : name}
-          </Grid>
+          </Typography>
         </Grid>
-      </Box>
-    </Container>
+        <Grid item xs={2}>
+          <Typography variant="h6">{aiLevel ? aiLevel : rating}</Typography>
+        </Grid>
+        <Grid item xs={8}>
+          <Typography variant="h6">{aiLevel ? "stockfish" : name}</Typography>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
