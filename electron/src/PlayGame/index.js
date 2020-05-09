@@ -257,6 +257,20 @@ const PlayGame = ({ myProfile, gameId }) => {
               <Moves board={state.board} />
             </Grid>
             <Grid item xs={6}>
+              <Grid item xs={12}>
+                <Container>
+                  {boardChanges.lost.length !== 0 && (
+                    <Box component="span" m={2} align="center" text-align="center" color="red">
+                      - {boardChanges.lost.join(", ")}
+                    </Box>
+                  )}
+                  {boardChanges.gained.length !== 0 && (
+                    <Box component="span" m={2} align="center" text-align="center" color="green">
+                      + {boardChanges.gained.join(", ")}
+                    </Box>
+                  )}
+                </Container>
+              </Grid>
               {autopatzerdMove.move && !autopatzerdMove.confirmed && (
                 <Grid item xs={12}>
                   <ConfirmMove
@@ -265,26 +279,6 @@ const PlayGame = ({ myProfile, gameId }) => {
                   />
                 </Grid>
               )}
-              <Grid item xs={12}>
-                {boardChanges.gained.length !== 0 && (
-                  <Container>
-                    <Box m={2} align="center" text-align="center" color="green">
-                      Gained:
-                      {boardChanges.gained.join(", ")}
-                    </Box>
-                  </Container>
-                )}
-              </Grid>
-              <Grid item xs={12}>
-                {boardChanges.lost.length !== 0 && (
-                  <Container>
-                    <Box m={2} align="center" text-align="center" color="red">
-                      Lost:
-                      {boardChanges.lost.join(", ")}
-                    </Box>
-                  </Container>
-                )}
-              </Grid>
             </Grid>
           </Grid>
         </Grid>
