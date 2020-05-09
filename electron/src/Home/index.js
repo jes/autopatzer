@@ -26,6 +26,8 @@ const useStyles = makeStyles(() => ({
 const Home = ({ setGameId }) => {
   const classes = useStyles();
 
+  let nowPlayingGamesInterval;
+
   const [modalOpen, setModalOpen] = useState(false);
   const [gamesInProgress, setGamesInProgress] = useState([]);
   const [ip, setIP] = useState(null);
@@ -46,6 +48,12 @@ const Home = ({ setGameId }) => {
     getNowPlaying().then(({ nowPlaying }) => {
       setGamesInProgress(nowPlaying);
     });
+
+    nowPlayingGamesInterval = setInterval(() => {
+      getNowPlaying().then(({ nowPlaying }) => {
+        setGamesInProgress(nowPlaying);
+      });
+    }, 2000);
   }, []);
 
   const startGame = (gameId) => {
@@ -53,6 +61,10 @@ const Home = ({ setGameId }) => {
       handleModalClose();
     }
     setGameId(gameId);
+    if (nowPlayingGamesInterval) {
+      clearInterval(nowPlayingGamesInterval);
+      nowPlayingGamesInterval = false;
+    }
   };
 
   return (
