@@ -6,7 +6,6 @@ import ScrollableFeed from "react-scrollable-feed";
 
 const Moves = ({ board }) => {
   const turnListItems = chunk(board.history(), 2).map((turn, index) => {
-    turn = turn.join(" ");
     return (
       <ListItem key={turn}>
         <Box
@@ -20,8 +19,11 @@ const Moves = ({ board }) => {
         >
           {index + 1}
         </Box>
-        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22}>
-          {turn}
+        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={100}>
+          {turn[0]}
+        </Box>
+        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={100}>
+          {turn[1]}
         </Box>
       </ListItem>
     );
