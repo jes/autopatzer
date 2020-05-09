@@ -40,6 +40,8 @@ const App = () => {
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
 
+  let nowPlayingGamesInterval;
+
   const { exec } = require('child_process');
   exec('ip route get 1 | head -n1 | sed \'s/.* src //\' | sed \'s/ .*//\'', (error, stdout, stderr) => {
     setIP(stdout);
@@ -52,9 +54,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    getNowPlaying().then(({ nowPlaying }) => {
-      setGamesInProgress(nowPlaying);
-    });
+    nowPlayingGamesInterval = setInterval(() => {
+      getNowPlaying().then(({ nowPlaying }) => {
+        setGamesInProgress(nowPlaying);
+      });
+    }, 1000);
   }, []);
 
   const startNewGame = (gameId) => {
@@ -62,6 +66,10 @@ const App = () => {
       handleModalClose();
     }
     setGameId(gameId);
+    if (nowPlayingGamesInterval) {
+      clearInterval(nowPlayingGamesInterval);
+      nowPlayingGamesInterval = false;
+    }
   };
 
   return (
