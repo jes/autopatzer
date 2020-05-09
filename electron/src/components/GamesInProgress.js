@@ -52,7 +52,7 @@ const GamesInProgress = ({ gamesInProgress, startNewGame }) => {
         <Typography variant="h6" align="center">
           Or Resume an Existing Game
         </Typography>
-        <Box p={2} height="280px" overflow="auto">
+        <Box p={2} height="260px" overflow="auto">
           <List disablePadding={true}>{gamesInProgrssListItems}</List>
         </Box>
       </Grid>
