@@ -65,6 +65,7 @@ const Game = ({ myProfile, gameId }) => {
     board: new Chess(),
     timers: null,
     resetSent: false,
+    sentMoves: [],
   });
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
@@ -80,6 +81,11 @@ const Game = ({ myProfile, gameId }) => {
     switch (value.type) {
       // We get one gameFull when the event stream opens
       case "gameFull":
+        let moves = loadPGN(value.state.moves).history();
+        sendAutopatzerdMessage({
+          op: "reset",
+          moves: moves,
+        });
         setState({
           players: transformPlayerDetails(
             myProfile.id,
@@ -88,10 +94,7 @@ const Game = ({ myProfile, gameId }) => {
           ),
           board: loadPGN(value.state.moves),
           timers: getEndTimes(value.state.wtime, value.state.btime),
-        });
-        sendAutopatzerdMessage({
-          op: "reset",
-          moves: loadPGN(value.state.moves).history(),
+          sentMoves: moves,
         });
         break;
       // Subsequent events are gameState
@@ -159,11 +162,17 @@ const Game = ({ myProfile, gameId }) => {
 
   useEffect(() => {
     const moves = state.board.history();
-    if (state.resetSent && moves.length) {
-      sendAutopatzerdMessage({
-        op: "play",
-        move: moves.slice(-1)[0],
-      });
+    if (state.resetSent && moves.length > state.sentMoves.length) {
+      for (let i = state.sentMoves.length; i < moves.length; i++) {
+        sendAutopatzerdMessage({
+          op: "play",
+          move: moves[i],
+        });
+      }
+      setState((state) => ({
+        ...state,
+        sentMoves: moves,
+      }));
     }
   }, [state.board, state.resetSent]);
 
