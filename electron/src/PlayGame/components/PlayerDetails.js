@@ -39,10 +39,10 @@ const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
           </Typography>
         </Grid>
         <Grid item xs={2}>
-          <Typography variant="h6">{aiLevel ? aiLevel : rating}</Typography>
+          <Typography color="textSecondary" variant="h6">{aiLevel ? '' : rating}</Typography>
         </Grid>
         <Grid item xs={8}>
-          <Typography variant="h6">{aiLevel ? "stockfish" : name}</Typography>
+          <Typography variant="h6">{aiLevel ? "Stockfish level " + aiLevel : name}</Typography>
         </Grid>
       </Grid>
     </Box>
