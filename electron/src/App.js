@@ -54,11 +54,15 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    getNowPlaying().then(({ nowPlaying }) => {
+      setGamesInProgress(nowPlaying);
+    });
+
     nowPlayingGamesInterval = setInterval(() => {
       getNowPlaying().then(({ nowPlaying }) => {
         setGamesInProgress(nowPlaying);
       });
-    }, 1000);
+    }, 2000);
   }, []);
 
   const startNewGame = (gameId) => {
