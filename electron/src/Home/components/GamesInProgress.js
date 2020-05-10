@@ -3,6 +3,7 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChessKing } from "@fortawesome/free-solid-svg-icons";
 import { grey } from "@material-ui/core/colors";
+import { CircularProgress} from "@material-ui/core";
 
 import {
   List,
@@ -14,7 +15,7 @@ import {
   Typography,
 } from "@material-ui/core";
 
-const GamesInProgress = ({ gamesInProgress, startGame }) => {
+const GamesInProgress = ({ gamesInProgress, checkedGames, startGame }) => {
   const gamesInProgressListItems = gamesInProgress.map((g, index) => {
     const turn = g.isMyTurn ? "Your move" : "Their move";
     const gameType = `${g.variant.name} (${g.speed})`;
@@ -49,9 +50,14 @@ const GamesInProgress = ({ gamesInProgress, startGame }) => {
     <Grid item container xs={12} spacing={2}>
       <Grid item xs={12}>
         <Typography variant="h6" align="center">
-          {gamesInProgressListItems.length === 0
-            ? "No Existing Games"
-            : "Resume an Existing Game"}
+          {checkedGames === false && (
+            <Box>Checking for Existing Games... <CircularProgress size={24} /></Box>
+          )}
+          {checkedGames === true &&
+            (gamesInProgressListItems.length === 0
+              ? "No Existing Games"
+              : "Resume an Existing Game"
+          )}
         </Typography>
       </Grid>
       {gamesInProgressListItems.length !== 0 && (

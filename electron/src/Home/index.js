@@ -33,6 +33,8 @@ const Home = ({ setGameId }) => {
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
 
+  const [checkedGamesInProgress, setCheckedGamesInProgress] = useState(false);
+
   useEffect(() => {
     exec(
       "ip route get 1 | head -n1 | sed 's/.* src //' | sed 's/ .*//'",
@@ -45,11 +47,13 @@ const Home = ({ setGameId }) => {
   useEffect(() => {
     getNowPlaying().then(({ nowPlaying }) => {
       setGamesInProgress(nowPlaying);
+      setCheckedGamesInProgress(true);
     });
 
     const nowPlayingGamesInterval = setInterval(() => {
       getNowPlaying().then(({ nowPlaying }) => {
         setGamesInProgress(nowPlaying);
+        setCheckedGamesInProgress(true);
       });
     }, 2000);
 
@@ -88,6 +92,7 @@ const Home = ({ setGameId }) => {
           <Box height="310px">
             <GamesInProgress
               gamesInProgress={gamesInProgress}
+              checkedGames={checkedGamesInProgress}
               startGame={startGame}
             />
           </Box>
