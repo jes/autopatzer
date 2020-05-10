@@ -10,6 +10,8 @@ import { getNowPlaying } from "../lichess";
 import GamesInProgress from "./components/GamesInProgress";
 import FindGame from "./components/FindGame";
 
+import { logger } from "../log";
+
 const useStyles = makeStyles(() => ({
   modal: {
     position: "absolute",
@@ -46,12 +48,14 @@ const Home = ({ setGameId }) => {
 
   useEffect(() => {
     getNowPlaying().then(({ nowPlaying }) => {
+      logger.info({ event: 'lichess-now-playing', data: nowPlaying });
       setGamesInProgress(nowPlaying);
       setCheckedGamesInProgress(true);
     });
 
     const nowPlayingGamesInterval = setInterval(() => {
       getNowPlaying().then(({ nowPlaying }) => {
+        logger.info({ event: 'lichess-now-playing', data: nowPlaying });
         setGamesInProgress(nowPlaying);
         setCheckedGamesInProgress(true);
       });

@@ -22,7 +22,7 @@ const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
 
     const interval = setInterval(() => {
       updatePlayerOnlineStatus();
-    }, 5000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [id, aiLevel]);
 

@@ -242,16 +242,16 @@ sub movePiece {
     $self->releaseMagnet();
 }
 
-# move the X motor back and forth to make a noise
+# move the Y motor back and forth to make a noise
 sub wiggle {
     my ($self) = @_;
 
-    my $pos1 = $self->{motorx};
-    my $pos2 = $pos1 < 4 ? $pos1+1 : $pos1-1;
+    my $pos1 = $self->{motory};
+    my $pos2 = $pos1 < 4 ? $pos1+0.25 : $pos1-0.25;
 
     for (1..2) {
-        $self->moveMotors($pos2, $self->{motory}, 1);
-        $self->moveMotors($pos1, $self->{motory}, 1);
+        $self->moveMotors($self->{motory}, $pos2, 1);
+        $self->moveMotors($self->{motory}, $pos1, 1);
     }
 }
 
