@@ -6,7 +6,6 @@ import "./App.css";
 
 import Home from "./Home";
 import PlayGame from "./PlayGame";
-import Loading from "./Loading";
 
 const App = () => {
   const [myProfile, setMyProfile] = useState(null);
@@ -18,14 +17,10 @@ const App = () => {
     });
   }, []);
 
-  if (myProfile) {
-    if (!gameId) {
-      return <Home setGameId={setGameId} />;
-    } else {
-      return <PlayGame myProfile={myProfile} gameId={gameId} />;
-    }
+  if (!gameId) {
+    return <Home setGameId={setGameId} />;
   } else {
-    return <Loading />;
+    return <PlayGame myProfile={myProfile} gameId={gameId} />;
   }
 };
 

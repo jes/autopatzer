@@ -9,22 +9,26 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
   },
-  loadingSpinner: {
+  loadingSpinner: (props) => ({
     color: green[500],
     position: "absolute",
     top: "50%",
     left: "50%",
-    marginTop: -48,
-    marginLeft: -48,
-  },
+    marginTop: -props.size / 2,
+    marginLeft: -props.size / 2,
+  }),
 }));
 
-const Loading = () => {
-  const classes = useStyles();
+const Loading = ({ size }) => {
+  if (!size) {
+    size = 96;
+  }
+
+  const classes = useStyles({ size });
 
   return (
     <Box className={classes.wrapper}>
-      <CircularProgress size={96} className={classes.loadingSpinner} />
+      <CircularProgress size={size} className={classes.loadingSpinner} />
     </Box>
   );
 };

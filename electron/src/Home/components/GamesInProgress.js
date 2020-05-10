@@ -3,7 +3,6 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChessKing } from "@fortawesome/free-solid-svg-icons";
 import { grey } from "@material-ui/core/colors";
-import { CircularProgress} from "@material-ui/core";
 
 import {
   List,
@@ -14,6 +13,8 @@ import {
   Grid,
   Typography,
 } from "@material-ui/core";
+
+import Loading from "../../Loading";
 
 const GamesInProgress = ({ gamesInProgress, checkedGames, startGame }) => {
   const gamesInProgressListItems = gamesInProgress.map((g, index) => {
@@ -51,13 +52,15 @@ const GamesInProgress = ({ gamesInProgress, checkedGames, startGame }) => {
       <Grid item xs={12}>
         <Typography variant="h6" align="center">
           {checkedGames === false && (
-            <Box>Checking for Existing Games... <CircularProgress size={24} /></Box>
+            <Box>
+              Checking for Existing Games...
+              <Loading size={48} />
+            </Box>
           )}
           {checkedGames === true &&
             (gamesInProgressListItems.length === 0
               ? "No Existing Games"
-              : "Resume an Existing Game"
-          )}
+              : "Resume an Existing Game")}
         </Typography>
       </Grid>
       {gamesInProgressListItems.length !== 0 && (
