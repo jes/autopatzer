@@ -75,7 +75,7 @@ const StartGame = ({ gamesInProgress, startGame }) => {
 
   useEffect(() => {
     getNewGameId(gamesInProgress, startGame);
-  }, [gamesInProgress, startGame]);
+  }, []);
 
   return (
     <Box p={2}>

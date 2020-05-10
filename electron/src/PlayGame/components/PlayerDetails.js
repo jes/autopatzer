@@ -8,16 +8,16 @@ import { logger } from "../../log";
 const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
   const [online, setOnline] = useState(false);
 
-  useEffect(() => {
-    const updatePlayerOnlineStatus = () => {
-      if (!aiLevel) {
-        getPlayerStatus(id).then(([player]) => {
-          logger.info({ event: "lichess-user-status", data: player });
-          setOnline(player.online);
-        });
-      }
-    };
+  const updatePlayerOnlineStatus = () => {
+    if (!aiLevel) {
+      getPlayerStatus(id).then(([player]) => {
+        logger.info({ event: "lichess-user-status", data: player });
+        setOnline(player.online);
+      });
+    }
+  };
 
+  useEffect(() => {
     updatePlayerOnlineStatus();
 
     const interval = setInterval(() => {
