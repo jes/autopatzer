@@ -193,6 +193,7 @@ const PlayGame = ({ myProfile, gameId }) => {
 
       if (uci) {
         if (autopatzerdMove.confirmed) {
+          logger.info({ event: "lichess-make-move", data: uci });
           makeBoardMove(gameId, uci).then(() => {
             setAutopatzerdMove({
               move: "",
