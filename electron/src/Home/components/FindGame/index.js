@@ -13,10 +13,11 @@ import { green } from "@material-ui/core/colors";
 import TimeControl from "./components/TimeControl";
 import ColourControl from "./components/ColourControl";
 import AILevelControl from "./components/AILevelControl";
-import { createSeek, challengeAI, getEventStream } from "../../../lichess";
+import RatedControl from "./components/RatedControl";
 import { logger } from "../../../log";
 
-import RatedControl from "./components/RatedControl";
+import { createSeek, challengeAI } from "../../../lichess";
+import { useLichessEventStream } from "./hooks/useLichessEventStream";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -40,6 +41,8 @@ const useStyles = makeStyles((theme) => ({
 const StartGame = ({ gamesInProgress, startGame }) => {
   const classes = useStyles();
 
+  const { lichessEvent, lichessEventError } = useLichessEventStream();
+
   const [time, setTime] = useState({ time: 15, increment: 10 });
   const [colour, setColour] = useState("random");
   const [rated, setRated] = useState(false);
@@ -47,35 +50,24 @@ const StartGame = ({ gamesInProgress, startGame }) => {
   const [findingGame, setFindingGame] = useState(false);
   const [findingAIGame, setFindingAIGame] = useState(false);
 
-  const getNewGameId = (gamesInProgress, startGame) => {
-    getEventStream().then((stream) => {
-      let read;
-      const reader = stream.getReader();
-      reader.read().then(
-        (read = ({ done, value }) => {
-          if (done && done === true) {
-            return;
-          }
+  useEffect(() => {
+    if (lichessEvent !== null) {
+      logger.info({ event: "lichess-event-stream", data: lichessEvent });
 
-          if (value.type && value.type === "gameStart") {
-            logger.info({ event: "lichess-board-stream", data: value });
-
-            if (!gamesInProgress.some((g) => g["gameId"] === value.game.id)) {
-              reader.cancel(`Got gameId ${value.game.id}`);
-              setFindingGame(false);
-              startGame(value.game.id);
-            }
-          }
-
-          return reader.read().then(read);
-        })
-      );
-    });
-  };
+      if (lichessEvent.type === "gameStart") {
+        if (
+          !gamesInProgress.some((g) => g["gameId"] === lichessEvent.game.id)
+        ) {
+          setFindingGame(false);
+          startGame(lichessEvent.game.id);
+        }
+      }
+    }
+  }, [lichessEvent, gamesInProgress, startGame]);
 
   useEffect(() => {
-    getNewGameId(gamesInProgress, startGame);
-  }, []);
+    logger.error({ event: "lichess-event-stream", data: lichessEventError });
+  }, [lichessEventError]);
 
   return (
     <Box p={2}>

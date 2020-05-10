@@ -12,7 +12,9 @@ import Timer from "./components/Timer";
 import PawnPromotion from "./components/PawnPromotion";
 import Loading from "../Loading";
 
-import { getBoardEventStream, makeBoardMove } from "../lichess";
+import { logger } from "../log";
+import { makeBoardMove } from "../lichess";
+import { useBoardEventStream } from "./hooks/useBoardEventStream";
 import {
   playerOrder,
   loadPGN,
@@ -20,7 +22,6 @@ import {
   transformPlayerDetails,
   getEndTimes,
 } from "./utils.js";
-import { logger } from "../log";
 
 const autopatzerdHost = process.env.REACT_APP_AUTOPATZERD_WS;
 
@@ -39,15 +40,12 @@ const useStyles = makeStyles((theme) => ({
 const PlayGame = ({ myProfile, gameId }) => {
   const classes = useStyles();
 
-  const autopatzerdSocketOptions = {
+  const { boardEvent, boardEventError } = useBoardEventStream(gameId);
+
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(autopatzerdHost, {
     retryOnError: true,
     shouldReconnect: () => true,
-  };
-
-  const { sendJsonMessage, lastJsonMessage } = useWebSocket(
-    autopatzerdHost,
-    autopatzerdSocketOptions
-  );
+  });
 
   const [autopatzerdMove, setAutopatzerdMove] = useState({
     move: "",
@@ -77,96 +75,101 @@ const PlayGame = ({ myProfile, gameId }) => {
     sendJsonMessage(message);
   };
 
-  const handleBoardStreamEvent = (value) => {
-    logger.info({ event: "lichess-board-stream", data: value });
-    switch (value.type) {
-      // We get one gameFull when the event stream opens
-      case "gameFull":
-        let moves = loadPGN(value.state.moves).history();
-        sendAutopatzerdMessage({
-          op: "reset",
-          moves: moves,
-        });
-        let players = transformPlayerDetails(
-          myProfile.id,
-          value.white,
-          value.black
-        );
-        setState({
-          players: players,
-          board: loadPGN(value.state.moves),
-          timers: getEndTimes(value.state.wtime, value.state.btime),
-          sentMoves: moves,
-        });
-        let iAmWhite = players.white.opponent === false;
-        let whiteToMove = (moves.length % 2) === 0;
-        if (iAmWhite === whiteToMove) {
-          // if the player is to move, send a wiggle to wake up the user as it is his turn to move
+  useEffect(() => {
+    if (boardEvent !== null) {
+      logger.info({ event: "lichess-board-event-stream", data: boardEvent });
+      switch (boardEvent.type) {
+        // We get one gameFull when the event stream opens
+        case "gameFull":
+          let moves = loadPGN(boardEvent.state.moves).history();
           sendAutopatzerdMessage({
-            op: "wiggle",
+            op: "reset",
+            moves: moves,
           });
-        }
-        break;
-      // Subsequent events are gameState
-      case "gameState":
-        setState((state) => ({
-          ...state,
-          board: loadPGN(value.moves),
-          timers: getEndTimes(value.wtime, value.btime),
-          // Set on the first (and subsequent) gameState events, implies we've seen the gameFull message and sent a reset to autopatzerd with the game's full move history
-          resetSent: true,
-        }));
-        break;
-      default:
-        break;
+          let players = transformPlayerDetails(
+            myProfile.id,
+            boardEvent.white,
+            boardEvent.black
+          );
+          setState({
+            players: players,
+            board: loadPGN(boardEvent.state.moves),
+            timers: getEndTimes(boardEvent.state.wtime, boardEvent.state.btime),
+            sentMoves: moves,
+          });
+          let iAmWhite = players.white.opponent === false;
+          let whiteToMove = moves.length % 2 === 0;
+          if (iAmWhite === whiteToMove) {
+            // if the player is to move, send a wiggle to wake up the user as it is his turn to move
+            sendAutopatzerdMessage({
+              op: "wiggle",
+            });
+          }
+          break;
+        // Subsequent events are gameState
+        case "gameState":
+          setState((state) => ({
+            ...state,
+            board: loadPGN(boardEvent.moves),
+            timers: getEndTimes(boardEvent.wtime, boardEvent.btime),
+            // Set on the first (and subsequent) gameState events, implies we've seen the gameFull message and sent a reset to autopatzerd with the game's full move history
+            resetSent: true,
+          }));
+          break;
+        default:
+          break;
+      }
     }
-  };
+  }, [boardEvent]);
 
-  const handleAutopatzerdMessage = (message) => {
-    switch (message.op) {
-      case "board":
-        logger.info({ event: "autopatzerd-board", data: message });
-        if (!message.move.length) {
-          setAutopatzerdMove({
-            move: "",
-            confirmed: false,
-          });
-        } else {
-          setAutopatzerdMove({
-            ...autopatzerdMove,
-            move: message.move,
-          });
-        }
-        setBoardChanges({
-          gained: message.gained,
-          lost: message.lost,
-        });
-        break;
-      case "button":
-        logger.info({ event: "autopatzerd-button", data: message });
-        setAutopatzerdMove({
-          ...autopatzerdMove,
-          confirmed: true,
-        });
-        setBoardChanges({
-          gained: [],
-          lost: [],
-        });
-        break;
-      case "error":
-        logger.error({ event: "autopatzerd-error", data: message });
-        break;
-      case "ping":
-        logger.debug({ event: "autopatzerd-ping", data: message });
-        break;
-      default:
-        break;
-    }
-  };
+  useEffect(() => {
+    logger.error({
+      event: "lichess-board-event-stream",
+      data: boardEventError,
+    });
+  }, [boardEventError]);
 
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.op) {
-      handleAutopatzerdMessage(lastJsonMessage);
+      switch (lastJsonMessage.op) {
+        case "board":
+          logger.info({ event: "autopatzerd-board", data: lastJsonMessage });
+          if (!lastJsonMessage.move.length) {
+            setAutopatzerdMove({
+              move: "",
+              confirmed: false,
+            });
+          } else {
+            setAutopatzerdMove((autopatzerdMove) => ({
+              ...autopatzerdMove,
+              move: lastJsonMessage.move,
+            }));
+          }
+          setBoardChanges({
+            gained: lastJsonMessage.gained,
+            lost: lastJsonMessage.lost,
+          });
+          break;
+        case "button":
+          logger.info({ event: "autopatzerd-button", data: lastJsonMessage });
+          setAutopatzerdMove((autopatzerdMove) => ({
+            ...autopatzerdMove,
+            confirmed: true,
+          }));
+          setBoardChanges({
+            gained: [],
+            lost: [],
+          });
+          break;
+        case "error":
+          logger.error({ event: "autopatzerd-error", data: lastJsonMessage });
+          break;
+        case "ping":
+          logger.debug({ event: "autopatzerd-ping", data: lastJsonMessage });
+          break;
+        default:
+          break;
+      }
     }
   }, [lastJsonMessage]);
 
@@ -211,28 +214,6 @@ const PlayGame = ({ myProfile, gameId }) => {
       handlePawnPromotionModalClose();
     }
   }, [autopatzerdMove, gameId]);
-
-  useEffect(() => {
-    getBoardEventStream(gameId).then((stream) => {
-      let read;
-      const reader = stream.getReader();
-      reader.read().then(
-        (read = ({ done, value }) => {
-          if (done && done === true) {
-            return;
-          }
-
-          if (!value.type) {
-            return;
-          }
-
-          handleBoardStreamEvent(value);
-
-          return reader.read().then(read);
-        })
-      );
-    });
-  }, [gameId]);
 
   if (!state.players) {
     return <Loading />;

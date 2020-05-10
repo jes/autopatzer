@@ -83,9 +83,10 @@ export const getProfile = () => {
     });
 };
 
-export const getEventStream = () => {
+export const getEventStream = (signal) => {
   return fetch(`${lichessApiEndpoint}/stream/event`, {
     headers: headers,
+    signal,
   })
     .then(handleErrors)
     .then((response) => {
@@ -93,9 +94,10 @@ export const getEventStream = () => {
     });
 };
 
-export const getBoardEventStream = (gameId) => {
+export const getBoardEventStream = (gameId, signal) => {
   return fetch(`${lichessApiEndpoint}/board/game/stream/${gameId}`, {
     headers: headers,
+    signal,
   })
     .then(handleErrors)
     .then((response) => {
