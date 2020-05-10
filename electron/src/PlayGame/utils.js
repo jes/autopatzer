@@ -13,6 +13,9 @@ export const moveToUCI = (board, move) => {
   console.log("fen = " + board.fen() + "; moveToUCI: " + move)
   const tempBoard = new Chess(board.fen());
   const moveDetails = tempBoard.move(move, { sloppy: true });
+  if (!moveDetails) {
+    return [undefined, false];
+  }
   const isPawnPromotion = moveDetails.flags.includes("p");
   const promotionPiece = isPawnPromotion ? moveDetails.promotion : '';
   return [`${moveDetails.from}${moveDetails.to}${promotionPiece}`, isPawnPromotion];
