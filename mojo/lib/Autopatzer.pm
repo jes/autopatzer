@@ -318,7 +318,6 @@ sub moveShown {
         my $to = $gained[0];
         my $promote = '';
         if ($self->{game}->get_piece_at($from) & 0x1 && $to =~ /[18]/) {
-            # TODO: ask what piece to promote to
             $promote = 'q';
         }
 
@@ -341,6 +340,14 @@ sub moveShown {
         my $s = join(',', @lost, @gained);
         return $castle{$s} if $castle{$s};
     } elsif (@lost == 2 && @gained == 1) { # en passant
+        my $to = $gained[0];
+        my $from1 = $lost[0];
+        my $from2 = $lost[1];
+        if ($self->{game}->get_piece_at($from1) & 0x1 && $self->{game}->get_piece_at($from2) & 0x1 && $to =~ /[36]/) {
+            my $file = substr($to,0,1);
+            my $realfrom = grep { $_ !~ /$file/ } @lost;
+            return "$realfrom$to" if $realfrom;
+        }
     }
 
     return undef;
