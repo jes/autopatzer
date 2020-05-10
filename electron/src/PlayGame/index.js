@@ -285,6 +285,7 @@ const PlayGame = ({ myProfile, gameId }) => {
                   <ConfirmMove
                     autopatzerdMove={autopatzerdMove}
                     setAutopatzerdMove={setAutopatzerdMove}
+                    setBoardChanges={setBoardChanges}
                   />
                 </Grid>
               )}

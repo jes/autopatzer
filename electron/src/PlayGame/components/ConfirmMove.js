@@ -12,7 +12,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove }) => {
+const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove, setBoardChanges }) => {
   const classes = useStyles();
 
   return (
@@ -26,12 +26,16 @@ const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove }) => {
             disableElevation
             className={classes.button}
             size="large"
-            onClick={() =>
+            onClick={() => {
               setAutopatzerdMove({
                 move: autopatzerdMove.move,
                 confirmed: true,
-              })
-            }
+              });
+              setBoardChanges({
+                lost: [],
+                gained: []
+              });
+            }}
           >
             {autopatzerdMove.move}
           </Button>
