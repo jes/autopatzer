@@ -10,6 +10,7 @@ export const loadPGN = (moves) => {
 };
 
 export const moveToUCI = (board, move) => {
+  console.log("fen = " + board.fen() + "; moveToUCI: " + move)
   const tempBoard = new Chess(board.fen());
   const moveDetails = tempBoard.move(move, { sloppy: true });
   const isPawnPromotion = moveDetails.flags.includes("p");
