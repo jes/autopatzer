@@ -22,12 +22,22 @@ sub detect {
             $promote = 'q';
         }
 
+        # don't say the king has castled if he's moved 2 squares without moving the rook
+        my %is_castle = map { $_ => 1 } qw(e1g1 e8g1 e1c1 e8c8);
+        return undef if $game->get_piece_at($from) & 0x4 && $is_castle{"$from$to"};
+
         return "$from$to$promote";
     } elsif (@lost == 1 && @gained == 0) { # piece captured
         # assume that the last non-moving player's piece that was lifted is the one that was captured
         if ($lastlifted) {
             my $from = $lost[0];
-            return "$from$lastlifted";
+
+            my $promote = '';
+            if ($game->get_piece_at($from) & 0x1 && $lastlifted =~ /[18]/) {
+                $promote = 'q';
+            }
+
+            return "$from$lastlifted$promote";
         }
     } elsif (@lost == 2 && @gained == 2) { # castling
         @lost = sort @lost;
