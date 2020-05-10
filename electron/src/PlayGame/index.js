@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
 
@@ -72,12 +72,12 @@ const PlayGame = ({ myProfile, gameId }) => {
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
   const handlePawnPromotionModalClose = () => setPawnPromotionModalOpen(false);
 
-  const sendAutopatzerdMessage = (message) => {
+  const sendAutopatzerdMessage = useCallback((message) => {
     logger.info({ event: `autopatzerd-${message.op}`, data: message });
     sendJsonMessage(message);
-  };
+  }, [sendJsonMessage]);
 
-  const handleBoardStreamEvent = (value) => {
+  const handleBoardStreamEvent = useCallback((value) => {
     logger.info({ event: "lichess-board-stream", data: value });
     switch (value.type) {
       // We get one gameFull when the event stream opens
@@ -120,9 +120,9 @@ const PlayGame = ({ myProfile, gameId }) => {
       default:
         break;
     }
-  };
+  }, [sendAutopatzerdMessage, setState, myProfile.id]);
 
-  const handleAutopatzerdMessage = (message) => {
+  const handleAutopatzerdMessage = useCallback((message) => {
     switch (message.op) {
       case "board":
         logger.info({ event: "autopatzerd-board", data: message });
@@ -162,13 +162,13 @@ const PlayGame = ({ myProfile, gameId }) => {
       default:
         break;
     }
-  };
+  }, [setAutopatzerdMove, setBoardChanges, autopatzerdMove]);
 
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.op) {
       handleAutopatzerdMessage(lastJsonMessage);
     }
-  }, [lastJsonMessage]);
+  }, [handleAutopatzerdMessage, lastJsonMessage]);
 
   useEffect(() => {
     const moves = state.board.history();
@@ -184,7 +184,7 @@ const PlayGame = ({ myProfile, gameId }) => {
         sentMoves: moves,
       }));
     }
-  }, [state.board, state.resetSent]);
+  }, [sendAutopatzerdMessage, state.board, state.resetSent, state.sentMoves]);
 
   useEffect(() => {
     let showModal = false;
@@ -209,7 +209,7 @@ const PlayGame = ({ myProfile, gameId }) => {
     } else {
       handlePawnPromotionModalClose();
     }
-  }, [autopatzerdMove, gameId]);
+  }, [state.board, autopatzerdMove, gameId]);
 
   useEffect(() => {
     getBoardEventStream(gameId).then((stream) => {
@@ -231,7 +231,7 @@ const PlayGame = ({ myProfile, gameId }) => {
         })
       );
     });
-  }, [gameId]);
+  }, [handleBoardStreamEvent, gameId]);
 
   if (!state.players) {
     return <Loading />;
@@ -285,6 +285,7 @@ const PlayGame = ({ myProfile, gameId }) => {
                   <ConfirmMove
                     autopatzerdMove={autopatzerdMove}
                     setAutopatzerdMove={setAutopatzerdMove}
+                    setBoardChanges={setBoardChanges}
                   />
                 </Grid>
               )}
