@@ -70,11 +70,6 @@ const PlayGame = ({ myProfile, gameId }) => {
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
   const handlePawnPromotionModalClose = () => setPawnPromotionModalOpen(false);
 
-  const sendAutopatzerdMessage = (message) => {
-    logger.info({ event: `autopatzerd-${message.op}`, data: message });
-    sendJsonMessage(message);
-  };
-
   useEffect(() => {
     if (boardEvent !== null) {
       logger.info({ event: "lichess-board-event-stream", data: boardEvent });
@@ -82,10 +77,12 @@ const PlayGame = ({ myProfile, gameId }) => {
         // We get one gameFull when the event stream opens
         case "gameFull":
           let moves = loadPGN(boardEvent.state.moves).history();
-          sendAutopatzerdMessage({
+          let msg = {
             op: "reset",
             moves: moves,
-          });
+          };
+          logger.info({ event: `autopatzerd-${msg.op}`, data: msg });
+          sendJsonMessage(msg);
           let players = transformPlayerDetails(
             myProfile.id,
             boardEvent.white,
@@ -101,9 +98,9 @@ const PlayGame = ({ myProfile, gameId }) => {
           let whiteToMove = moves.length % 2 === 0;
           if (iAmWhite === whiteToMove) {
             // if the player is to move, send a wiggle to wake up the user as it is his turn to move
-            sendAutopatzerdMessage({
-              op: "wiggle",
-            });
+            const msg = { op: "wiggle" };
+            logger.info({ event: `autopatzerd-${msg.op}`, data: msg });
+            sendJsonMessage(msg);
           }
           break;
         // Subsequent events are gameState
@@ -120,7 +117,7 @@ const PlayGame = ({ myProfile, gameId }) => {
           break;
       }
     }
-  }, [boardEvent]);
+  }, [boardEvent, sendJsonMessage, myProfile]);
 
   useEffect(() => {
     logger.error({
@@ -171,23 +168,25 @@ const PlayGame = ({ myProfile, gameId }) => {
           break;
       }
     }
-  }, [lastJsonMessage]);
+  }, [lastJsonMessage, sendJsonMessage]);
 
   useEffect(() => {
     const moves = state.board.history();
     if (state.resetSent && moves.length > state.sentMoves.length) {
       for (let i = state.sentMoves.length; i < moves.length; i++) {
-        sendAutopatzerdMessage({
+        const msg = {
           op: "play",
           move: moves[i],
-        });
+        };
+        logger.info({ event: `autopatzerd-${msg.op}`, data: msg });
+        sendJsonMessage(msg);
       }
       setState((state) => ({
         ...state,
         sentMoves: moves,
       }));
     }
-  }, [state.board, state.resetSent]);
+  }, [state.board, state.resetSent, state.sentMoves, sendJsonMessage]);
 
   useEffect(() => {
     let showModal = false;
@@ -213,7 +212,7 @@ const PlayGame = ({ myProfile, gameId }) => {
     } else {
       handlePawnPromotionModalClose();
     }
-  }, [autopatzerdMove, gameId]);
+  }, [state.board, autopatzerdMove, gameId]);
 
   if (!state.players) {
     return <Loading />;
@@ -251,12 +250,24 @@ const PlayGame = ({ myProfile, gameId }) => {
               <Grid item xs={12}>
                 <Container>
                   {boardChanges.lost.length !== 0 && (
-                    <Box component="span" m={2} align="center" text-align="center" color="red">
+                    <Box
+                      component="span"
+                      m={2}
+                      align="center"
+                      text-align="center"
+                      color="red"
+                    >
                       - {boardChanges.lost.join(", ")}
                     </Box>
                   )}
                   {boardChanges.gained.length !== 0 && (
-                    <Box component="span" m={2} align="center" text-align="center" color="green">
+                    <Box
+                      component="span"
+                      m={2}
+                      align="center"
+                      text-align="center"
+                      color="green"
+                    >
                       + {boardChanges.gained.join(", ")}
                     </Box>
                   )}

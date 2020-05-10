@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { exec } from "child_process";
+import useInterval from "use-interval";
 
 import { Box, Grid, Button, Divider, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -37,6 +38,26 @@ const Home = ({ setGameId }) => {
 
   const [checkedGamesInProgress, setCheckedGamesInProgress] = useState(false);
 
+  const getGamesInProgress = () => {
+    getNowPlaying().then(({ nowPlaying }) => {
+      logger.info({ event: "lichess-now-playing", data: nowPlaying });
+      setGamesInProgress(nowPlaying);
+      setCheckedGamesInProgress(true);
+    });
+  };
+
+  const startGame = (gameId) => {
+    if (modalOpen) {
+      handleModalClose();
+    }
+    setGameId(gameId);
+  };
+
+  const shutdown = () => {
+    exec("./poweroff");
+    require("electron").remote.getCurrentWindow().close();
+  };
+
   useEffect(() => {
     exec(
       "ip route get 1 | head -n1 | sed 's/.* src //' | sed 's/ .*//'",
@@ -47,34 +68,12 @@ const Home = ({ setGameId }) => {
   }, []);
 
   useEffect(() => {
-    getNowPlaying().then(({ nowPlaying }) => {
-      logger.info({ event: 'lichess-now-playing', data: nowPlaying });
-      setGamesInProgress(nowPlaying);
-      setCheckedGamesInProgress(true);
-    });
-
-    const nowPlayingGamesInterval = setInterval(() => {
-      getNowPlaying().then(({ nowPlaying }) => {
-        logger.info({ event: 'lichess-now-playing', data: nowPlaying });
-        setGamesInProgress(nowPlaying);
-        setCheckedGamesInProgress(true);
-      });
-    }, 2000);
-
-    return () => clearInterval(nowPlayingGamesInterval);
+    getGamesInProgress();
   }, []);
 
-  const startGame = (gameId) => {
-    if (modalOpen) {
-      handleModalClose();
-    }
-    setGameId(gameId);
-  };
-
-  const shutdown =() => {
-    exec("./poweroff");
-    require('electron').remote.getCurrentWindow().close();
-  };
+  useInterval(() => {
+    getGamesInProgress();
+  }, 5000);
 
   return (
     <Box p={2}>
@@ -110,10 +109,7 @@ const Home = ({ setGameId }) => {
           </Box>
         </Grid>
         <Grid item xs={6} justify="flex-end" direction="row">
-          <Button
-            variant="contained"
-            onClick={shutdown}
-          >
+          <Button variant="contained" onClick={shutdown}>
             Power off
           </Button>
         </Grid>

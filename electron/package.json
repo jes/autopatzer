@@ -22,6 +22,7 @@
     "react-use-websocket": "^2.0.1",
     "typeface-anonymous-pro": "0.0.72",
     "typeface-roboto": "0.0.75",
+    "use-interval": "^1.2.1",
     "winston": "^3.2.1",
     "yarn": "^1.22.4"
   },
