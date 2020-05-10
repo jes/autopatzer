@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Autopatzer::Router;
+use Autopatzer::Input;
 use Chess::Rep;
 use IO::Select;
 use Time::HiRes qw(usleep);
@@ -305,52 +306,7 @@ sub moveShown {
         }
     }
 
-    my $nlost = @lost;
-    my $ngained = @gained;
-
-    # 1 lost and 1 gained: normal move or pawn promotion
-    # 1 lost and 0 gained: piece captured
-    # 2 lost and 2 gained: castling
-    # 2 lost and 1 gained: en passant capture
-    # other: illegal
-    if (@lost == 1 && @gained == 1) { # normal move
-        my $from = $lost[0];
-        my $to = $gained[0];
-        my $promote = '';
-        if ($self->{game}->get_piece_at($from) & 0x1 && $to =~ /[18]/) {
-            $promote = 'q';
-        }
-
-        return "$from$to$promote";
-    } elsif (@lost == 1 && @gained == 0) { # piece captured
-        # assume that the last non-moving player's piece that was lifted is the one that was captured
-        if ($self->{last_lifted}) {
-            my $from = $lost[0];
-            return "$from$self->{last_lifted}";
-        }
-    } elsif (@lost == 2 && @gained == 2) { # castling
-        @lost = sort @lost;
-        @gained = sort @gained;
-        my %castle = (
-            "e1,h1,f1,g1" => "e1g1",
-            "e8,h8,f8,g8" => "e8g8",
-            "a1,e1,c1,d1" => "e1c1",
-            "a8,e8,c8,d8" => "e8c8",
-        );
-        my $s = join(',', @lost, @gained);
-        return $castle{$s} if $castle{$s};
-    } elsif (@lost == 2 && @gained == 1) { # en passant
-        my $to = $gained[0];
-        my $from1 = $lost[0];
-        my $from2 = $lost[1];
-        if ($self->{game}->get_piece_at($from1) & 0x1 && $self->{game}->get_piece_at($from2) & 0x1 && $to =~ /[36]/) {
-            my $file = substr($to,0,1);
-            my $realfrom = grep { $_ !~ /$file/ } @lost;
-            return "$realfrom$to" if $realfrom;
-        }
-    }
-
-    return undef;
+    return Autopatzer::Input->detect($self->{game}, \@lost, \@gained, $self->{last_lifted});
 }
 
 sub XY2square {
