@@ -310,9 +310,8 @@ const PlayGame = ({ myProfile, gameId }) => {
                       <Box
                         component="span"
                         m={2}
-                        align="center"
-                        text-align="center"
                         color="red"
+                        fontSize="2em"
                       >
                         - {boardChanges.lost.join(", ")}
                       </Box>
@@ -321,9 +320,8 @@ const PlayGame = ({ myProfile, gameId }) => {
                       <Box
                         component="span"
                         m={2}
-                        align="center"
-                        text-align="center"
                         color="green"
+                        fontSize="2em"
                       >
                         + {boardChanges.gained.join(", ")}
                       </Box>
