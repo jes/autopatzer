@@ -342,8 +342,8 @@ const PlayGame = ({ myProfile, gameId }) => {
               )}
               {state.gameOver && (
                 <Grid item xs={12}>
-                  <Typography variant="h3" align="center">{state.txtResult}</Typography>
-                  <Typography variant="h6" align="center">{state.txtGameStatus}</Typography>
+                  <Typography variant="h1" align="center">{state.txtResult}</Typography>
+                  <Typography align="center">{state.txtGameStatus}</Typography>
                 </Grid>
               )}
               </Grid>
