@@ -20,6 +20,7 @@
     "react-scripts": "3.4.1",
     "react-scrollable-feed": "^1.1.2",
     "react-use-websocket": "^2.0.1",
+    "sweetalert": "^2.1.2",
     "typeface-anonymous-pro": "0.0.72",
     "typeface-roboto": "0.0.75",
     "use-interval": "^1.2.1",

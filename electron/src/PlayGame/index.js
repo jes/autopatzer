@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
+import swal from "sweetalert";
 
 import { Button, Container, Grid, Box, Modal, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -14,7 +15,7 @@ import Loading from "../Loading";
 import BoardChanges from "./components/BoardChanges";
 
 import { logger } from "../log";
-import { makeBoardMove } from "../lichess";
+import { makeBoardMove, resignGame, requestDraw } from "../lichess";
 import { useBoardEventStream } from "./hooks/useBoardEventStream";
 import {
   playerOrder,
@@ -44,7 +45,7 @@ function ucFirst(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-const PlayGame = ({ myProfile, gameId }) => {
+const PlayGame = ({ myProfile, gameId, setGameId }) => {
   const classes = useStyles();
 
   const { boardEvent, boardEventError } = useBoardEventStream(gameId);
@@ -81,6 +82,36 @@ const PlayGame = ({ myProfile, gameId }) => {
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
   const handlePawnPromotionModalClose = () => setPawnPromotionModalOpen(false);
+
+  const leaveGame = () => {
+    setGameId(undefined);
+  };
+
+  const resign = () => {
+    swal({
+      title: 'Resign?',
+      text: 'Are you sure you want to resign?',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((reallyResign) => {
+      if (reallyResign)
+        resignGame(gameId);
+    });
+  };
+
+  const offerDraw = () => {
+    swal({
+      title: 'Offer draw?',
+      text: 'Are you sure you want to offer a draw?',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((reallyDraw) => {
+      if (reallyDraw)
+        requestDraw(gameId);
+    });
+  };
 
   useEffect(() => {
     if (boardEvent !== null) {
@@ -323,9 +354,9 @@ const PlayGame = ({ myProfile, gameId }) => {
                 )}
               </Box>
                 <Grid container xs={12} spacing={1}>
-                  <Grid item><Button variant="contained">Leave game</Button></Grid>
-                  <Grid item><Button variant="contained">Resign</Button></Grid>
-                  <Grid item><Button variant="contained">Offer draw</Button></Grid>
+                  <Grid item><Button variant="contained" onClick={leaveGame}>Leave game</Button></Grid>
+                  <Grid item><Button variant="contained" onClick={resign}>Resign</Button></Grid>
+                  <Grid item><Button variant="contained" onClick={offerDraw}>Offer draw</Button></Grid>
                 </Grid>
               </Grid>
           </Grid>

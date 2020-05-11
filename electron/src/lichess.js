@@ -14,14 +14,29 @@ const handleErrors = (response) => {
   return response;
 };
 
-export const challengeAI = (level, time, colour) => {
-  var formData = new FormData();
-  formData.append("level", level);
-  formData.append("color", colour);
-  formData.append("clock.limit", time.time * 60);
-  formData.append("clock.increment", time.increment);
+export const streamLichess = (uri, signal) => {
+  return fetch(lichessApiEndpoint + uri, {
+    headers: headers,
+    signal,
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return ndjsonStream(response.body);
+    });
+};
 
-  return fetch(`${lichessApiEndpoint}/challenge/ai`, {
+export const getLichess = (uri) => {
+  return fetch(lichessApiEndpoint + uri, {
+    headers: headers,
+  })
+    .then(handleErrors)
+    .then((response) => {
+      return response.json();
+    });
+};
+
+export const postLichess = (uri, formData) => {
+  return fetch(lichessApiEndpoint + uri, {
     headers: headers,
     method: "POST",
     body: formData,
@@ -30,6 +45,16 @@ export const challengeAI = (level, time, colour) => {
     .then((response) => {
       return response.json();
     });
+};
+
+export const challengeAI = (level, time, colour) => {
+  var formData = new FormData();
+  formData.append("level", level);
+  formData.append("color", colour);
+  formData.append("clock.limit", time.time * 60);
+  formData.append("clock.increment", time.increment);
+
+  return postLichess('/challenge/ai', formData);
 };
 
 export const createSeek = (time, colour, rated) => {
@@ -39,79 +64,40 @@ export const createSeek = (time, colour, rated) => {
   formData.append("color", colour);
   formData.append("rated", rated);
 
-  return fetch(`${lichessApiEndpoint}/board/seek`, {
-    headers: headers,
-    method: "POST",
-    body: formData,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return response.json();
-    });
+  return postLichess('/board/seek', formData);
 };
 
 export const getPlayerStatus = (user) => {
   var queryParams = new URLSearchParams();
   queryParams.append("ids", user);
 
-  return fetch(`${lichessApiEndpoint}/users/status?${queryParams.toString()}`, {
-    headers: headers,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return response.json();
-    });
+  return getLichess(`/users/status?${queryParams.toString()}`);
 };
 
 export const getNowPlaying = () => {
-  return fetch(`${lichessApiEndpoint}/account/playing`, {
-    headers: headers,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return response.json();
-    });
+  return getLichess('/account/playing');
 };
 
 export const getProfile = () => {
-  return fetch(`${lichessApiEndpoint}/account`, {
-    headers: headers,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return response.json();
-    });
+  return getLichess('/account');
 };
 
 export const getEventStream = (signal) => {
-  return fetch(`${lichessApiEndpoint}/stream/event`, {
-    headers: headers,
-    signal,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return ndjsonStream(response.body);
-    });
+  return streamLichess('/stream/event', signal);
 };
 
 export const getBoardEventStream = (gameId, signal) => {
-  return fetch(`${lichessApiEndpoint}/board/game/stream/${gameId}`, {
-    headers: headers,
-    signal,
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return ndjsonStream(response.body);
-    });
+  return streamLichess(`/board/game/stream/${gameId}`, signal);
 };
 
 export const makeBoardMove = (gameId, move) => {
-  return fetch(`${lichessApiEndpoint}/board/game/${gameId}/move/${move}`, {
-    headers: headers,
-    method: "POST",
-  })
-    .then(handleErrors)
-    .then((response) => {
-      return response.json();
-    });
+  return postLichess(`/board/game/${gameId}/move/${move}`);
+};
+
+export const resignGame = (gameId) => {
+  return postLichess(`/board/game/${gameId}/resign`);
+};
+
+export const requestDraw = (gameId) => {
+  return postLichess(`/board/game/${gameId}/draw/yes`);
 };
