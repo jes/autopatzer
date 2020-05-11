@@ -3,7 +3,7 @@ import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
 import swal from "sweetalert";
 
-import { Button, Container, Grid, Box, Modal, Typography } from "@material-ui/core";
+import { Button, Grid, Box, Modal, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import PlayerDetails from "./components/PlayerDetails";
