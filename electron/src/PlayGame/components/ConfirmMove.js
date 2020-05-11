@@ -9,6 +9,7 @@ const greenTheme = createMuiTheme({ palette: { primary: green } });
 const useStyles = makeStyles(() => ({
   button: {
     textTransform: "none",
+    fontSize: "3em",
   },
 }));
 
@@ -25,7 +26,6 @@ const ConfirmMove = ({ autopatzerdMove, setAutopatzerdMove, setBoardChanges }) =
             fullWidth={true}
             disableElevation
             className={classes.button}
-            size="large"
             onClick={() => {
               setAutopatzerdMove({
                 move: autopatzerdMove.move,
