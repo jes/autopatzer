@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
 
-import { Container, Grid, Box, Modal } from "@material-ui/core";
+import { Button, Container, Grid, Box, Modal, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import PlayerDetails from "./components/PlayerDetails";
@@ -37,6 +37,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function ucFirst(s) {
+  if (!s)
+    return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 const PlayGame = ({ myProfile, gameId }) => {
   const classes = useStyles();
 
@@ -65,6 +71,11 @@ const PlayGame = ({ myProfile, gameId }) => {
     timers: null,
     resetSent: false,
     sentMoves: [],
+    gameStatus: '',
+    gameWinner: '',
+    gameOver: false,
+    txtGameStatus: '',
+    txtResult: '',
   });
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
@@ -93,6 +104,8 @@ const PlayGame = ({ myProfile, gameId }) => {
             board: loadPGN(boardEvent.state.moves),
             timers: getEndTimes(boardEvent.state.wtime, boardEvent.state.btime),
             sentMoves: moves,
+            gameStatus: boardEvent.state.status,
+            gameWinner: boardEvent.state.winner,
           });
           let iAmWhite = players.white.opponent === false;
           let whiteToMove = moves.length % 2 === 0;
@@ -109,6 +122,8 @@ const PlayGame = ({ myProfile, gameId }) => {
             ...state,
             board: loadPGN(boardEvent.moves),
             timers: getEndTimes(boardEvent.wtime, boardEvent.btime),
+            gameStatus: boardEvent.status,
+            gameWinner: boardEvent.winner,
             // Set on the first (and subsequent) gameState events, implies we've seen the gameFull message and sent a reset to autopatzerd with the game's full move history
             resetSent: true,
           }));
@@ -213,6 +228,48 @@ const PlayGame = ({ myProfile, gameId }) => {
     }
   }, [state.board, autopatzerdMove, gameId]);
 
+  useEffect(() => {
+    let gameOver, txtGameStatus, txtResult = '';
+    if (state.gameStatus !== '' && state.gameStatus !== 'created' && state.gameStatus !== 'started') {
+        gameOver = true;
+        if (state.gameWinner === 'white') {
+            txtResult = '1-0';
+        } else if (state.gameWinner === 'black') {
+            txtResult = '0-1';
+        } else if (state.gameStatus !== 'aborted' && state.gameStatus !== 'noStart') {
+            txtResult = '½-½';
+        }
+    } else {
+      gameOver = false;
+    }
+
+    // Note: gameLoser will be 'White' in the event that the game has no winner yet;
+    // gameLoser value only applicable when gameWinner is set
+    let gameWinner = ucFirst(state.gameWinner);
+    let gameLoser = gameWinner === 'White' ? 'Black' : 'White';
+
+    if (state.gameStatus === 'mate') {
+        txtGameStatus = 'Checkmate, ' + gameWinner + ' is victorious';
+    } else if (state.gameStatus === 'resign') {
+        txtGameStatus = gameLoser + ' resigned, ' + gameWinner + ' is victorious';
+    } else if (state.gameStatus === 'timeout') {
+        txtGameStatus = gameLoser + ' left the game, ' + gameWinner + ' is victorious';
+    } else if (state.gameStatus === 'outoftime') {
+        txtGameStatus = 'Time out, ' + gameWinner + ' is victorious';
+    } else if (gameOver) {
+        txtGameStatus = 'Game over: ' + ucFirst(state.gameStatus);
+    } else {
+        txtGameStatus = ucFirst(state.gameStatus);
+    }
+
+    setState((state) => ({
+        ...state,
+        gameOver: gameOver,
+        txtGameStatus: txtGameStatus,
+        txtResult: txtResult,
+    }));
+  }, [state.gameWinner, state.gameStatus]);
+
   if (!state.players) {
     return <Loading />;
   } else {
@@ -246,33 +303,35 @@ const PlayGame = ({ myProfile, gameId }) => {
               <Moves board={state.board} />
             </Grid>
             <Grid item xs={6}>
-              <Grid item xs={12}>
-                <Container>
-                  {boardChanges.lost.length !== 0 && (
-                    <Box
-                      component="span"
-                      m={2}
-                      align="center"
-                      text-align="center"
-                      color="red"
-                    >
-                      - {boardChanges.lost.join(", ")}
-                    </Box>
-                  )}
-                  {boardChanges.gained.length !== 0 && (
-                    <Box
-                      component="span"
-                      m={2}
-                      align="center"
-                      text-align="center"
-                      color="green"
-                    >
-                      + {boardChanges.gained.join(", ")}
-                    </Box>
-                  )}
-                </Container>
-              </Grid>
-              {autopatzerdMove.move && !autopatzerdMove.confirmed && (
+              {!state.gameOver && (
+                <Grid item xs={12}>
+                  <Container>
+                    {boardChanges.lost.length !== 0 && (
+                      <Box
+                        component="span"
+                        m={2}
+                        align="center"
+                        text-align="center"
+                        color="red"
+                      >
+                        - {boardChanges.lost.join(", ")}
+                      </Box>
+                    )}
+                    {boardChanges.gained.length !== 0 && (
+                      <Box
+                        component="span"
+                        m={2}
+                        align="center"
+                        text-align="center"
+                        color="green"
+                      >
+                        + {boardChanges.gained.join(", ")}
+                      </Box>
+                    )}
+                  </Container>
+                </Grid>
+              )}
+              {!state.gameOver && autopatzerdMove.move && !autopatzerdMove.confirmed && (
                 <Grid item xs={12}>
                   <ConfirmMove
                     autopatzerdMove={autopatzerdMove}
@@ -281,7 +340,13 @@ const PlayGame = ({ myProfile, gameId }) => {
                   />
                 </Grid>
               )}
-            </Grid>
+              {state.gameOver && (
+                <Grid item xs={12}>
+                  <Typography variant="h3" align="center">{state.txtResult}</Typography>
+                  <Typography variant="h6" align="center">{state.txtGameStatus}</Typography>
+                </Grid>
+              )}
+              </Grid>
           </Grid>
         </Grid>
         <Modal
