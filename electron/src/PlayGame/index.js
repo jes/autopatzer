@@ -311,7 +311,7 @@ const PlayGame = ({ myProfile, gameId }) => {
                         component="span"
                         m={2}
                         color="red"
-                        fontSize="2em"
+                        fontSize="1.6em"
                       >
                         - {boardChanges.lost.join(", ")}
                       </Box>
@@ -321,7 +321,7 @@ const PlayGame = ({ myProfile, gameId }) => {
                         component="span"
                         m={2}
                         color="green"
-                        fontSize="2em"
+                        fontSize="1.6em"
                       >
                         + {boardChanges.gained.join(", ")}
                       </Box>
@@ -344,6 +344,7 @@ const PlayGame = ({ myProfile, gameId }) => {
                   <Typography align="center">{state.txtGameStatus}</Typography>
                 </Grid>
               )}
+              <Button variant="contained">Leave game</Button>
               </Grid>
           </Grid>
         </Grid>
