@@ -11,6 +11,7 @@ import ConfirmMove from "./components/ConfirmMove";
 import Timer from "./components/Timer";
 import PawnPromotion from "./components/PawnPromotion";
 import Loading from "../Loading";
+import BoardChanges from "./components/BoardChanges";
 
 import { logger } from "../log";
 import { makeBoardMove } from "../lichess";
@@ -302,49 +303,30 @@ const PlayGame = ({ myProfile, gameId }) => {
             <Grid item xs={6}>
               <Moves board={state.board} />
             </Grid>
-            <Grid item xs={6}>
-              {!state.gameOver && (
-                <Grid item xs={12}>
-                  <Container>
-                    {boardChanges.lost.length !== 0 && (
-                      <Box
-                        component="span"
-                        m={2}
-                        color="red"
-                        fontSize="1.6em"
-                      >
-                        - {boardChanges.lost.join(", ")}
-                      </Box>
-                    )}
-                    {boardChanges.gained.length !== 0 && (
-                      <Box
-                        component="span"
-                        m={2}
-                        color="green"
-                        fontSize="1.6em"
-                      >
-                        + {boardChanges.gained.join(", ")}
-                      </Box>
-                    )}
-                  </Container>
-                </Grid>
-              )}
-              {!state.gameOver && autopatzerdMove.move && !autopatzerdMove.confirmed && (
-                <Grid item xs={12}>
+            <Grid item xs={6} height="280px" overflow="auto">
+              <Box height="245px">
+                {!state.gameOver && (
+                  <BoardChanges boardChanges={boardChanges} />
+                )}
+                {!state.gameOver && autopatzerdMove.move && !autopatzerdMove.confirmed && (
                   <ConfirmMove
                     autopatzerdMove={autopatzerdMove}
                     setAutopatzerdMove={setAutopatzerdMove}
                     setBoardChanges={setBoardChanges}
                   />
+                )}
+                {state.gameOver && (
+                  <>
+                    <Typography variant="h1" align="center">{state.txtResult}</Typography>
+                    <Typography align="center">{state.txtGameStatus}</Typography>
+                  </>
+                )}
+              </Box>
+                <Grid container xs={12} spacing={1}>
+                  <Grid item><Button variant="contained">Leave game</Button></Grid>
+                  <Grid item><Button variant="contained">Resign</Button></Grid>
+                  <Grid item><Button variant="contained">Offer draw</Button></Grid>
                 </Grid>
-              )}
-              {state.gameOver && (
-                <Grid item xs={12}>
-                  <Typography variant="h1" align="center">{state.txtResult}</Typography>
-                  <Typography align="center">{state.txtGameStatus}</Typography>
-                </Grid>
-              )}
-              <Button variant="contained">Leave game</Button>
               </Grid>
           </Grid>
         </Grid>
