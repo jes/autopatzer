@@ -219,7 +219,7 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           break;
       }
     }
-  }, [lastJsonMessage, sendJsonMessage, autopatzerdMove]);
+  }, [lastJsonMessage, sendJsonMessage]);
 
   useEffect(() => {
     const moves = state.board.history();
