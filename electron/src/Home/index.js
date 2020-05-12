@@ -56,9 +56,9 @@ const Home = ({ setGameId }) => {
 
   const shutdown = () => {
     swal({
-      title: 'Power off?',
-      title: 'Are you sure you want to power the system off?',
-      icon: 'warning',
+      title: "Power Off",
+      text: "Are you sure you want to power the system off?",
+      icon: "warning",
       buttons: true,
       dangerMode: true,
     }).then((reallyPowerOff) => {
