@@ -198,14 +198,16 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           break;
         case "button":
           logger.info({ event: "autopatzerd-button", data: lastJsonMessage });
-          setAutopatzerdMove((autopatzerdMove) => ({
-            ...autopatzerdMove,
-            confirmed: true,
-          }));
-          setBoardChanges({
-            gained: [],
-            lost: [],
-          });
+          if (autopatzerdMove.move !== "") {
+            setAutopatzerdMove((autopatzerdMove) => ({
+              ...autopatzerdMove,
+              confirmed: true,
+            }));
+            setBoardChanges({
+              gained: [],
+              lost: [],
+            });
+          }
           break;
         case "error":
           logger.error({ event: "autopatzerd-error", data: lastJsonMessage });
@@ -217,7 +219,7 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           break;
       }
     }
-  }, [lastJsonMessage, sendJsonMessage]);
+  }, [lastJsonMessage, sendJsonMessage, autopatzerdMove]);
 
   useEffect(() => {
     const moves = state.board.history();

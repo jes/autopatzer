@@ -29,7 +29,7 @@ const Timer = ({ ticking, startTime, millisecs }) => {
 
   const evenTick = () => {
     let secs = Math.floor(currentMillis() / 1000);
-    return secs%2 == 0;
+    return secs%2 === 0;
   };
 
   const stringTime = () => {
