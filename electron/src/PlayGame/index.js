@@ -338,31 +338,74 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
             <Grid item xs={6}>
               <Moves board={state.board} />
             </Grid>
-            <Grid item xs={6} height="280px" overflow="auto">
-              <Box height="245px">
-                {!state.gameOver && (
-                  <BoardChanges boardChanges={boardChanges} />
-                )}
-                {!state.gameOver && autopatzerdMove.move && !autopatzerdMove.confirmed && (
-                  <ConfirmMove
-                    autopatzerdMove={autopatzerdMove}
-                    setAutopatzerdMove={setAutopatzerdMove}
-                    setBoardChanges={setBoardChanges}
-                  />
-                )}
-                {state.gameOver && (
-                  <>
-                    <Typography variant="h1" align="center">{state.txtResult}</Typography>
-                    <Typography align="center">{state.txtGameStatus}</Typography>
-                  </>
-                )}
+            <Grid item xs={6}>
+              <Box
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                }}
+              >
+                <Box flexGrow={1}>
+                  {!state.gameOver && (
+                    <BoardChanges boardChanges={boardChanges} />
+                  )}
+                  {!state.gameOver &&
+                    autopatzerdMove.move &&
+                    !autopatzerdMove.confirmed && (
+                      <ConfirmMove
+                        autopatzerdMove={autopatzerdMove}
+                        setAutopatzerdMove={setAutopatzerdMove}
+                        setBoardChanges={setBoardChanges}
+                      />
+                    )}
+                  {state.gameOver && (
+                    <>
+                      <Typography variant="h1" align="center">
+                        {state.txtResult}
+                      </Typography>
+                      <Typography align="center">
+                        {state.txtGameStatus}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+                <Box>
+                  <Grid container spacing={1} justify="space-between">
+                    <Grid item xs={4}>
+                      <Button
+                        variant="contained"
+                        fullWidth={true}
+                        onClick={leaveGame}
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Leave game
+                      </Button>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Button
+                        variant="contained"
+                        fullWidth={true}
+                        onClick={resign}
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Resign
+                      </Button>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Button
+                        variant="contained"
+                        fullWidth={true}
+                        onClick={offerDraw}
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Offer draw
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
               </Box>
-                <Grid container xs={12} spacing={1}>
-                  <Grid item><Button variant="contained" onClick={leaveGame}>Leave game</Button></Grid>
-                  <Grid item><Button variant="contained" onClick={resign}>Resign</Button></Grid>
-                  <Grid item><Button variant="contained" onClick={offerDraw}>Offer draw</Button></Grid>
-                </Grid>
-              </Grid>
+            </Grid>
           </Grid>
         </Grid>
         <Modal
