@@ -22,7 +22,6 @@ import {
   loadPGN,
   moveToUCI,
   transformPlayerDetails,
-  getEndTimes,
 } from "./utils.js";
 
 const autopatzerdHost = process.env.REACT_APP_AUTOPATZERD_WS;
@@ -71,6 +70,7 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     players: null,
     board: new Chess(),
     timers: null,
+    lastUpdateTime: null,
     resetSent: false,
     sentMoves: [],
     gameStatus: '',
@@ -134,7 +134,8 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           setState({
             players: players,
             board: loadPGN(boardEvent.state.moves),
-            timers: getEndTimes(boardEvent.state.wtime, boardEvent.state.btime),
+            timers: {white:boardEvent.state.wtime, black:boardEvent.state.btime},
+            lastUpdateTime: Date.now(),
             sentMoves: moves,
             gameStatus: boardEvent.state.status,
             gameWinner: boardEvent.state.winner,
@@ -153,7 +154,8 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           setState((state) => ({
             ...state,
             board: loadPGN(boardEvent.moves),
-            timers: getEndTimes(boardEvent.wtime, boardEvent.btime),
+            timers: {white:boardEvent.wtime, black:boardEvent.btime},
+            lastUpdateTime: Date.now(),
             gameStatus: boardEvent.status,
             gameWinner: boardEvent.winner,
             // Set on the first (and subsequent) gameState events, implies we've seen the gameFull message and sent a reset to autopatzerd with the game's full move history
@@ -322,9 +324,9 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
               return (
                 <Grid item xs={6} key={`timer-${p}`}>
                   <Timer
-                    board={state.board}
-                    endTime={state.timers[p]}
-                    colour={p}
+                    ticking={state.board.history().length>=2 && !state.gameOver && state.board.turn() === p.charAt(0)}
+                    millisecs={state.timers[p]}
+                    startTime={state.lastUpdateTime}
                   />
                 </Grid>
               );

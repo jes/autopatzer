@@ -1,5 +1,4 @@
 import Chess from "chess.js";
-import moment from "moment";
 
 export const playerOrder = ["white", "black"];
 
@@ -37,14 +36,5 @@ export const transformPlayerDetails = (myUserId, white, black) => {
   return {
     white: white,
     black: black,
-  };
-};
-
-export const getEndTimes = (white, black) => {
-  const timestamp = moment().endOf("second");
-
-  return {
-    white: moment(timestamp).add(white, "ms"),
-    black: moment(timestamp).add(black, "ms"),
   };
 };
