@@ -42,6 +42,9 @@ sub new {
     # consume & discard any pending data
     1 while $self->read(0);
 
+    # write an initial blank line to clear any garbage on the input
+    $self->write("");
+
     $self->scan(1);
 
     $self->{ready} = 1;
