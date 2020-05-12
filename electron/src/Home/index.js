@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import { exec } from "child_process";
 import useInterval from "use-interval";
+import swal from "sweetalert";
 
 import { Box, Grid, Button, Divider, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -54,8 +55,18 @@ const Home = ({ setGameId }) => {
   };
 
   const shutdown = () => {
-    exec("./poweroff");
-    require("electron").remote.getCurrentWindow().close();
+    swal({
+      title: 'Power off?',
+      title: 'Are you sure you want to power the system off?',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((reallyPowerOff) => {
+      if (reallyPowerOff) {
+        exec("./poweroff");
+        require("electron").remote.getCurrentWindow().close();
+      }
+    });
   };
 
   useEffect(() => {
