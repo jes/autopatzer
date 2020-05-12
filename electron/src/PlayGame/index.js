@@ -39,8 +39,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ucFirst(s) {
-  if (!s)
-    return '';
+  if (!s) return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
@@ -73,11 +72,11 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     lastUpdateTime: null,
     resetSent: false,
     sentMoves: [],
-    gameStatus: '',
-    gameWinner: '',
+    gameStatus: "",
+    gameWinner: "",
     gameOver: false,
-    txtGameStatus: '',
-    txtResult: '',
+    txtGameStatus: "",
+    txtResult: "",
   });
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
@@ -89,27 +88,25 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
 
   const resign = () => {
     swal({
-      title: 'Resign?',
-      text: 'Are you sure you want to resign?',
-      icon: 'warning',
+      title: "Resign?",
+      text: "Are you sure you want to resign?",
+      icon: "warning",
       buttons: true,
       dangerMode: true,
     }).then((reallyResign) => {
-      if (reallyResign)
-        resignGame(gameId);
+      if (reallyResign) resignGame(gameId);
     });
   };
 
   const offerDraw = () => {
     swal({
-      title: 'Offer draw?',
-      text: 'Are you sure you want to offer a draw?',
-      icon: 'warning',
+      title: "Offer draw?",
+      text: "Are you sure you want to offer a draw?",
+      icon: "warning",
       buttons: true,
       dangerMode: true,
     }).then((reallyDraw) => {
-      if (reallyDraw)
-        requestDraw(gameId);
+      if (reallyDraw) requestDraw(gameId);
     });
   };
 
@@ -134,7 +131,10 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           setState({
             players: players,
             board: loadPGN(boardEvent.state.moves),
-            timers: {white:boardEvent.state.wtime, black:boardEvent.state.btime},
+            timers: {
+              white: boardEvent.state.wtime,
+              black: boardEvent.state.btime,
+            },
             lastUpdateTime: Date.now(),
             sentMoves: moves,
             gameStatus: boardEvent.state.status,
@@ -154,7 +154,7 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
           setState((state) => ({
             ...state,
             board: loadPGN(boardEvent.moves),
-            timers: {white:boardEvent.wtime, black:boardEvent.btime},
+            timers: { white: boardEvent.wtime, black: boardEvent.btime },
             lastUpdateTime: Date.now(),
             gameStatus: boardEvent.status,
             gameWinner: boardEvent.winner,
@@ -265,16 +265,25 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
   }, [state.board, autopatzerdMove, gameId]);
 
   useEffect(() => {
-    let gameOver, txtGameStatus, txtResult = '';
-    if (state.gameStatus !== '' && state.gameStatus !== 'created' && state.gameStatus !== 'started') {
-        gameOver = true;
-        if (state.gameWinner === 'white') {
-            txtResult = '1-0';
-        } else if (state.gameWinner === 'black') {
-            txtResult = '0-1';
-        } else if (state.gameStatus !== 'aborted' && state.gameStatus !== 'noStart') {
-            txtResult = '½-½';
-        }
+    let gameOver,
+      txtGameStatus,
+      txtResult = "";
+    if (
+      state.gameStatus !== "" &&
+      state.gameStatus !== "created" &&
+      state.gameStatus !== "started"
+    ) {
+      gameOver = true;
+      if (state.gameWinner === "white") {
+        txtResult = "1-0";
+      } else if (state.gameWinner === "black") {
+        txtResult = "0-1";
+      } else if (
+        state.gameStatus !== "aborted" &&
+        state.gameStatus !== "noStart"
+      ) {
+        txtResult = "½-½";
+      }
     } else {
       gameOver = false;
     }
@@ -282,27 +291,28 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     // Note: gameLoser will be 'White' in the event that the game has no winner yet;
     // gameLoser value only applicable when gameWinner is set
     let gameWinner = ucFirst(state.gameWinner);
-    let gameLoser = gameWinner === 'White' ? 'Black' : 'White';
+    let gameLoser = gameWinner === "White" ? "Black" : "White";
 
-    if (state.gameStatus === 'mate') {
-        txtGameStatus = 'Checkmate, ' + gameWinner + ' is victorious';
-    } else if (state.gameStatus === 'resign') {
-        txtGameStatus = gameLoser + ' resigned, ' + gameWinner + ' is victorious';
-    } else if (state.gameStatus === 'timeout') {
-        txtGameStatus = gameLoser + ' left the game, ' + gameWinner + ' is victorious';
-    } else if (state.gameStatus === 'outoftime') {
-        txtGameStatus = 'Time out, ' + gameWinner + ' is victorious';
+    if (state.gameStatus === "mate") {
+      txtGameStatus = "Checkmate, " + gameWinner + " is victorious";
+    } else if (state.gameStatus === "resign") {
+      txtGameStatus = gameLoser + " resigned, " + gameWinner + " is victorious";
+    } else if (state.gameStatus === "timeout") {
+      txtGameStatus =
+        gameLoser + " left the game, " + gameWinner + " is victorious";
+    } else if (state.gameStatus === "outoftime") {
+      txtGameStatus = "Time out, " + gameWinner + " is victorious";
     } else if (gameOver) {
-        txtGameStatus = 'Game over: ' + ucFirst(state.gameStatus);
+      txtGameStatus = "Game over: " + ucFirst(state.gameStatus);
     } else {
-        txtGameStatus = ucFirst(state.gameStatus);
+      txtGameStatus = ucFirst(state.gameStatus);
     }
 
     setState((state) => ({
-        ...state,
-        gameOver: gameOver,
-        txtGameStatus: txtGameStatus,
-        txtResult: txtResult,
+      ...state,
+      gameOver: gameOver,
+      txtGameStatus: txtGameStatus,
+      txtResult: txtResult,
     }));
   }, [state.gameWinner, state.gameStatus]);
 
@@ -326,7 +336,11 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
               return (
                 <Grid item xs={6} key={`timer-${p}`}>
                   <Timer
-                    ticking={state.board.history().length>=2 && !state.gameOver && state.board.turn() === p.charAt(0)}
+                    ticking={
+                      state.board.history().length >= 2 &&
+                      !state.gameOver &&
+                      state.board.turn() === p.charAt(0)
+                    }
                     millisecs={state.timers[p]}
                     startTime={state.lastUpdateTime}
                   />
