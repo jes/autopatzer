@@ -23,7 +23,7 @@ sub detect {
         }
 
         # don't say the king has castled if he's moved 2 squares without moving the rook
-        my %is_castle = map { $_ => 1 } qw(e1g1 e8g1 e1c1 e8c8);
+        my %is_castle = map { $_ => 1 } qw(e1g1 e8g8 e1c1 e8c8);
         return undef if $game->get_piece_at($from) & 0x4 && $is_castle{"$from$to"};
 
         return "$from$to$promote";
