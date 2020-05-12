@@ -69,14 +69,14 @@ const Home = ({ setGameId }) => {
     });
   };
 
-  useEffect(() => {
+  useInterval(() => {
     exec(
       "ip route get 1 | head -n1 | sed 's/.* src //' | sed 's/ .*//'",
       (error, stdout, stderr) => {
         setIP(stdout);
       }
     );
-  }, []);
+  }, 5000);
 
   useEffect(() => {
     getGamesInProgress();
