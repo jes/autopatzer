@@ -114,15 +114,29 @@ const Home = ({ setGameId }) => {
         <Grid item xs={12}>
           <Divider variant="middle" />
         </Grid>
-        <Grid item xs={6}>
-          <Box textAlign="left" fontFamily="monospace" fontSize="h6.fontSize">
+        <Grid
+          item
+          xs={6}
+          style={{
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Box
+            textAlign="left"
+            fontFamily="monospace"
+            fontSize="h6.fontSize"
+            pl={2}
+          >
             {ip}
           </Box>
         </Grid>
-        <Grid item xs={6} justify="flex-end" direction="row">
-          <Button variant="contained" onClick={shutdown}>
-            Power off
-          </Button>
+        <Grid item xs={6}>
+          <Box align="right" pr={2}>
+            <Button variant="contained" color="secondary" onClick={shutdown}>
+              Power off
+            </Button>
+          </Box>
         </Grid>
       </Grid>
       <Modal open={modalOpen} onClose={handleModalClose}>
