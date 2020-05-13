@@ -318,7 +318,12 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
                 }}
               >
                 <Box flexGrow={1}>
-                  {state.gameOver && <Result state={state} />}
+                  {state.gameOver && (
+                    <Result
+                      gameWinner={state.gameWinner}
+                      gameStatus={state.gameStatus}
+                    />
+                  )}
                 </Box>
                 <Box>
                   {!state.gameOver && (
