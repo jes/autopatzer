@@ -279,103 +279,99 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     return (
       <Box p={2}>
         <Grid container spacing={2}>
-          <Grid container item xs={12} spacing={2}>
-            {playerOrder.map((p) => {
-              return (
-                <Grid item xs={6} key={`details-${p}`}>
-                  <PlayerDetails details={state.players[p]} />
-                </Grid>
-              );
-            })}
+          {playerOrder.map((p) => {
+            return (
+              <Grid item xs={6} key={`details-${p}`}>
+                <PlayerDetails details={state.players[p]} />
+              </Grid>
+            );
+          })}
+          {playerOrder.map((p) => {
+            return (
+              <Grid item xs={6} key={`timer-${p}`}>
+                <Timer
+                  ticking={
+                    state.board.history().length >= 2 &&
+                    !state.gameOver &&
+                    state.board.turn() === p.charAt(0)
+                  }
+                  millisecs={state.timers[p]}
+                  startTime={state.lastUpdateTime}
+                />
+              </Grid>
+            );
+          })}
+          <Grid item xs={6}>
+            <Moves board={state.board} />
           </Grid>
-          <Grid container item xs={12} spacing={2}>
-            {playerOrder.map((p) => {
-              return (
-                <Grid item xs={6} key={`timer-${p}`}>
-                  <Timer
-                    ticking={
-                      state.board.history().length >= 2 &&
-                      !state.gameOver &&
-                      state.board.turn() === p.charAt(0)
-                    }
-                    millisecs={state.timers[p]}
-                    startTime={state.lastUpdateTime}
-                  />
-                </Grid>
-              );
-            })}
-          </Grid>
-          <Grid container item xs={12} spacing={2}>
-            <Grid item xs={6}>
-              <Moves board={state.board} />
-            </Grid>
-            <Grid item xs={6}>
-              <Box
+          <Grid container item xs={6}>
+            <Grid
+              container
+              spacing={1}
+              item
+              style={{ flexDirection: "column" }}
+            >
+              <Grid
+                item
+                xs={12}
                 style={{
+                  flex: "1",
                   display: "flex",
                   flexDirection: "column",
-                  height: "100%",
+                  justifyContent: "center",
                 }}
               >
-                <Box flexGrow={1}>
-                  {state.gameOver && (
-                    <Result
-                      gameWinner={state.gameWinner}
-                      gameStatus={state.gameStatus}
+                {state.gameOver && (
+                  <Result
+                    gameWinner={state.gameWinner}
+                    gameStatus={state.gameStatus}
+                  />
+                )}
+                {!state.gameOver && (
+                  <>
+                    <Box mb={1}>
+                      <BoardChanges boardChanges={boardChanges} />
+                    </Box>
+                    <ConfirmMove
+                      autopatzerdMove={autopatzerdMove}
+                      setAutopatzerdMove={setAutopatzerdMove}
+                      setBoardChanges={setBoardChanges}
                     />
-                  )}
-                </Box>
-                <Box>
-                  {!state.gameOver && (
-                    <BoardChanges boardChanges={boardChanges} />
-                  )}
-                </Box>
-                <Box height="85px" my={1}>
-                  {!state.gameOver &&
-                    autopatzerdMove.move &&
-                    !autopatzerdMove.confirmed && (
-                      <ConfirmMove
-                        autopatzerdMove={autopatzerdMove}
-                        setAutopatzerdMove={setAutopatzerdMove}
-                        setBoardChanges={setBoardChanges}
-                      />
-                    )}
-                </Box>
-                <Box>
-                  <Grid container spacing={1} justify="space-between">
-                    <Grid item xs={4}>
-                      <Button
-                        variant="contained"
-                        fullWidth={true}
-                        onClick={leaveGame}
-                        style={{ whiteSpace: "nowrap" }}
-                      >
-                        Leave game
-                      </Button>
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Button
-                        variant="contained"
-                        fullWidth={true}
-                        onClick={resign}
-                        style={{ whiteSpace: "nowrap" }}
-                      >
-                        Resign
-                      </Button>
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Button
-                        variant="contained"
-                        fullWidth={true}
-                        onClick={offerDraw}
-                        style={{ whiteSpace: "nowrap" }}
-                      >
-                        Offer draw
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Box>
+                  </>
+                )}
+              </Grid>
+              <Grid container item spacing={1} style={{ flex: 0 }}>
+                <Grid item xs={4}>
+                  <Button
+                    variant="contained"
+                    fullWidth={true}
+                    onClick={leaveGame}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Leave game
+                  </Button>
+                </Grid>
+                <Grid item xs={4}>
+                  <Button
+                    variant="contained"
+                    fullWidth={true}
+                    onClick={resign}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Resign
+                  </Button>
+                </Grid>
+                <Grid item xs={4}>
+                  <Button
+                    variant="contained"
+                    fullWidth={true}
+                    onClick={offerDraw}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Offer draw
+                  </Button>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

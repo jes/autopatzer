@@ -1,22 +1,40 @@
 import React from "react";
 import { Grid, Box } from "@material-ui/core";
+import { green, red } from "@material-ui/core/colors";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 
 const BoardChanges = ({ boardChanges }) => {
   return (
-    <Grid container item xs={12}>
+    <Grid
+      container
+      item
+      xs={12}
+      style={{
+        flex: "0",
+      }}
+    >
       <Grid item xs={6}>
-        {boardChanges.lost.length !== 0 && (
-          <Box component="span" m={2} color="red" fontSize="1.6em">
-            - {boardChanges.lost.join(", ")}
+        <Box p={1} borderRadius="borderRadius" bgcolor={red[100]} mr={1}>
+          <Box pr={1} display="inline" color={red[900]}>
+            <FontAwesomeIcon icon={faMinus} size="sm" />
           </Box>
-        )}
+          <Box display="inline" fontSize="1.5em" fontFamily="Anonymous Pro">
+            {boardChanges.lost.length !== 0 ? boardChanges.lost.join(", ") : ""}
+          </Box>
+        </Box>
       </Grid>
       <Grid item xs={6}>
-        {boardChanges.gained.length !== 0 && (
-          <Box component="span" m={2} color="green" fontSize="1.6em">
-            + {boardChanges.gained.join(", ")}
+        <Box p={1} borderRadius="borderRadius" bgcolor={green[100]}>
+          <Box pr={1} display="inline" color={green[900]}>
+            <FontAwesomeIcon icon={faPlus} size="sm" />
           </Box>
-        )}
+          <Box display="inline" fontSize="1.5em" fontFamily="Anonymous Pro">
+            {boardChanges.gained.length !== 0
+              ? boardChanges.gained.join(", ")
+              : ""}
+          </Box>
+        </Box>
       </Grid>
     </Grid>
   );

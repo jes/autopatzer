@@ -7,49 +7,44 @@ function ucFirst(s) {
 }
 
 const Result = ({ gameWinner, gameStatus }) => {
-  const [textResult, setTextResult] = useState("");
-  const [textStatus, setTextStatus] = useState("");
+  let textResult, textStatus;
 
-  useEffect(() => {
-    switch (gameWinner) {
-      case "white":
-        setTextResult("1-0");
-        break;
-      case "black":
-        setTextResult("0-1");
-        break;
-      default:
-        if (gameStatus !== "aborted" && gameStatus !== "noStart") {
-          setTextResult("½-½");
-        }
-        break;
-    }
+  switch (gameWinner) {
+    case "white":
+      textResult = "1-0";
+      break;
+    case "black":
+      textResult = "0-1";
+      break;
+    default:
+      if (gameStatus !== "aborted" && gameStatus !== "noStart") {
+        textResult = "½-½";
+      }
+      break;
+  }
 
-    // Note: gameLoser will be 'White' in the event that the game has no winner yet;
-    // gameLoser value only applicable when gameWinner is set
-    let gameWinner = ucFirst(gameWinner);
-    let gameLoser = gameWinner === "White" ? "Black" : "White";
+  // Note: gameLoser will be 'White' in the event that the game has no winner yet;
+  // gameLoser value only applicable when gameWinner is set
+  gameWinner = ucFirst(gameWinner);
+  let gameLoser = gameWinner === "White" ? "Black" : "White";
 
-    switch (gameStatus) {
-      case "mate":
-        setTextStatus(`Checkmate, ${gameWinner} is victorious`);
-        break;
-      case "resign":
-        setTextStatus(`${gameLoser} resigned, ${gameWinner} is victorious`);
-        break;
-      case "timeout":
-        setTextStatus(
-          `${gameLoser} left the game, ${gameWinner} is victorious`
-        );
-        break;
-      case "outoftime":
-        setTextStatus(`Time out, ${gameWinner} is victorious`);
-        break;
-      default:
-        setTextStatus(`Game over: ${ucFirst(gameStatus)}`);
-        break;
-    }
-  }, [gameWinner, gameStatus]);
+  switch (gameStatus) {
+    case "mate":
+      textStatus = `Checkmate, ${gameWinner} is victorious`;
+      break;
+    case "resign":
+      textStatus = `${gameLoser} resigned, ${gameWinner} is victorious`;
+      break;
+    case "timeout":
+      textStatus = `${gameLoser} left the game, ${gameWinner} is victorious`;
+      break;
+    case "outoftime":
+      textStatus = `Time out, ${gameWinner} is victorious`;
+      break;
+    default:
+      textStatus = `Game over: ${ucFirst(gameStatus)}`;
+      break;
+  }
 
   return (
     <>
