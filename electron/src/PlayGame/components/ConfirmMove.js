@@ -1,11 +1,10 @@
 import React from "react";
-import { Button } from "@material-ui/core";
+import { Button, Box } from "@material-ui/core";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import { green, grey } from "@material-ui/core/colors";
 import { makeStyles } from "@material-ui/core/styles";
 
 const greenTheme = createMuiTheme({ palette: { primary: green } });
-const greyTheme = createMuiTheme({ palette: { primary: { main: grey[100] } } });
 
 const useStyles = makeStyles(() => ({
   button: {
@@ -48,18 +47,12 @@ const ConfirmMove = ({
     );
   } else {
     return (
-      <MuiThemeProvider theme={greyTheme}>
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth={true}
-          disableElevation
-          className={classes.button}
-          disabled={true}
-        >
-          &nbsp;
-        </Button>
-      </MuiThemeProvider>
+      <Box
+        p={1}
+        borderRadius="borderRadius"
+        bgcolor={grey[200]}
+        className={classes.button}
+      ></Box>
     );
   }
 };
