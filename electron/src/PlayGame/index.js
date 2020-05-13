@@ -366,6 +366,8 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
                   {!state.gameOver && (
                     <BoardChanges boardChanges={boardChanges} />
                   )}
+                </Box>
+                <Box height="85px" my={1}>
                   {!state.gameOver &&
                     autopatzerdMove.move &&
                     !autopatzerdMove.confirmed && (
