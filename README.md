@@ -17,9 +17,9 @@ You can [watch a video of the board](https://www.youtube.com/watch?v=8ScFtkWvHW8
 I thoroughly encourage you to build an Autopatzer board. You'll need:
 
  - 3d printer
- - comfortable setting up a Raspberry Pi
  - soldering skills
  - general DIY skills
+ - and it would probably help to have prior experience with Arduino and Raspberry Pi
 
 I currently have 4 spare PCBs so if you want one please just get in touch and tell me where to post it.
 
