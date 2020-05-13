@@ -5,6 +5,7 @@ import swal from "sweetalert";
 
 import { Button, Grid, Box, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { grey } from "@material-ui/core/colors";
 
 import PlayerDetails from "./components/PlayerDetails";
 import Moves from "./components/Moves";
@@ -277,7 +278,7 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     return <Loading />;
   } else {
     return (
-      <Box p={2}>
+      <Box p={2} bgcolor={grey[50]}>
         <Grid container spacing={2}>
           {playerOrder.map((p) => {
             return (

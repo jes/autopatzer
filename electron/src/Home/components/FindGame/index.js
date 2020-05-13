@@ -8,7 +8,7 @@ import {
   Divider,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { green } from "@material-ui/core/colors";
+import { green, grey } from "@material-ui/core/colors";
 
 import TimeControl from "./components/TimeControl";
 import ColourControl from "./components/ColourControl";
@@ -70,7 +70,7 @@ const StartGame = ({ gamesInProgress, startGame }) => {
   }, [lichessEventError]);
 
   return (
-    <Box p={2}>
+    <Box p={2} bgcolor={grey[50]}>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <TimeControl time={time} setTime={setTime} />

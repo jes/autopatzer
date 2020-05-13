@@ -30,7 +30,7 @@ const Moves = ({ board }) => {
   });
 
   return (
-    <Box height="280px" overflow="auto" boxShadow={1}>
+    <Box height="280px" overflow="auto" boxShadow={1} bgcolor="white">
       <ScrollableFeed forceScroll={true}>
         <List>{turnListItems}</List>
       </ScrollableFeed>

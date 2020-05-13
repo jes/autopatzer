@@ -6,6 +6,7 @@ import swal from "sweetalert";
 
 import { Box, Grid, Button, Divider, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { grey } from "@material-ui/core/colors";
 
 import { getNowPlaying } from "../lichess";
 
@@ -89,7 +90,7 @@ const Home = ({ setGameId }) => {
   }, 5000);
 
   return (
-    <Box p={2}>
+    <Box p={2} bgcolor={grey[50]}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Button

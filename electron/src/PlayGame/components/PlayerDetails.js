@@ -28,7 +28,12 @@ const Player = ({ details: { id, name, colour, aiLevel, rating } }) => {
   }, [updatePlayerOnlineStatus]);
 
   return (
-    <Box p={2} textAlign={colour === "white" ? "right" : "left"} boxShadow={1}>
+    <Box
+      p={2}
+      textAlign={colour === "white" ? "right" : "left"}
+      boxShadow={1}
+      bgcolor="white"
+    >
       <Grid
         container
         spacing={2}
