@@ -19,10 +19,20 @@ const Moves = ({ board }) => {
         >
           {index + 1}
         </Box>
-        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={120}>
+        <Box
+          display="inline"
+          fontFamily="Anonymous Pro"
+          fontSize={22}
+          minWidth={120}
+        >
           {turn[0]}
         </Box>
-        <Box display="inline" fontFamily="Anonymous Pro" fontSize={22} minWidth={120}>
+        <Box
+          display="inline"
+          fontFamily="Anonymous Pro"
+          fontSize={22}
+          minWidth={120}
+        >
           {turn[1]}
         </Box>
       </ListItem>
