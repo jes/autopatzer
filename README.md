@@ -1,12 +1,16 @@
 # autopatzer
 
-[Autopatzer is] ...
+An automatic chess board, supporting online play with people all over the world via the [Lichess Boards API](https://lichess.org/blog/XlRW5REAAB8AUJJ-/welcome-lichess-boards).
 
 This repo contains FreeCAD files for the mechanical design, KiCad files for PCB design, Arduino code to run on
 the microcontroller, Perl code for the library/program that interfaces with the controller, and JavaScript code for the
 user interface and Lichess interface.
 
-## Demo video
+You can [watch a video of the board](https://www.youtube.com/watch?v=8ScFtkWvHW8) if you want.
+
+![](img/board.jpeg)
+
+![](img/gui.png)
 
 ## Build one yourself
 
