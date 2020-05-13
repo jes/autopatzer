@@ -3,7 +3,7 @@ import useWebSocket from "react-use-websocket";
 import Chess from "chess.js";
 import swal from "sweetalert";
 
-import { Button, Grid, Box, Modal, Typography } from "@material-ui/core";
+import { Button, Grid, Box, Modal } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import PlayerDetails from "./components/PlayerDetails";
@@ -13,6 +13,7 @@ import Timer from "./components/Timer";
 import PawnPromotion from "./components/PawnPromotion";
 import Loading from "../Loading";
 import BoardChanges from "./components/BoardChanges";
+import Result from "./components/Result";
 
 import { logger } from "../log";
 import { makeBoardMove, resignGame, requestDraw } from "../lichess";
@@ -37,11 +38,6 @@ const useStyles = makeStyles((theme) => ({
     border: "1px solid #000",
   },
 }));
-
-function ucFirst(s) {
-  if (!s) return "";
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 const PlayGame = ({ myProfile, gameId, setGameId }) => {
   const classes = useStyles();
@@ -75,8 +71,6 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     gameStatus: "",
     gameWinner: "",
     gameOver: false,
-    txtGameStatus: "",
-    txtResult: "",
   });
 
   const handlePawnPromotionModalOpen = () => setPawnPromotionModalOpen(true);
@@ -167,6 +161,19 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
       }
     }
   }, [boardEvent, sendJsonMessage, myProfile]);
+
+  useEffect(() => {
+    if (
+      state.gameStatus !== "" &&
+      state.gameStatus !== "created" &&
+      state.gameStatus !== "started"
+    ) {
+      setState((state) => ({
+        ...state,
+        gameOver: true,
+      }));
+    }
+  }, [state.gameStatus]);
 
   useEffect(() => {
     logger.error({
@@ -266,58 +273,6 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
     }
   }, [state.board, autopatzerdMove, gameId]);
 
-  useEffect(() => {
-    let gameOver,
-      txtGameStatus,
-      txtResult = "";
-    if (
-      state.gameStatus !== "" &&
-      state.gameStatus !== "created" &&
-      state.gameStatus !== "started"
-    ) {
-      gameOver = true;
-      if (state.gameWinner === "white") {
-        txtResult = "1-0";
-      } else if (state.gameWinner === "black") {
-        txtResult = "0-1";
-      } else if (
-        state.gameStatus !== "aborted" &&
-        state.gameStatus !== "noStart"
-      ) {
-        txtResult = "½-½";
-      }
-    } else {
-      gameOver = false;
-    }
-
-    // Note: gameLoser will be 'White' in the event that the game has no winner yet;
-    // gameLoser value only applicable when gameWinner is set
-    let gameWinner = ucFirst(state.gameWinner);
-    let gameLoser = gameWinner === "White" ? "Black" : "White";
-
-    if (state.gameStatus === "mate") {
-      txtGameStatus = "Checkmate, " + gameWinner + " is victorious";
-    } else if (state.gameStatus === "resign") {
-      txtGameStatus = gameLoser + " resigned, " + gameWinner + " is victorious";
-    } else if (state.gameStatus === "timeout") {
-      txtGameStatus =
-        gameLoser + " left the game, " + gameWinner + " is victorious";
-    } else if (state.gameStatus === "outoftime") {
-      txtGameStatus = "Time out, " + gameWinner + " is victorious";
-    } else if (gameOver) {
-      txtGameStatus = "Game over: " + ucFirst(state.gameStatus);
-    } else {
-      txtGameStatus = ucFirst(state.gameStatus);
-    }
-
-    setState((state) => ({
-      ...state,
-      gameOver: gameOver,
-      txtGameStatus: txtGameStatus,
-      txtResult: txtResult,
-    }));
-  }, [state.gameWinner, state.gameStatus]);
-
   if (!state.players) {
     return <Loading />;
   } else {
@@ -363,6 +318,9 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
                 }}
               >
                 <Box flexGrow={1}>
+                  {state.gameOver && <Result state={state} />}
+                </Box>
+                <Box>
                   {!state.gameOver && (
                     <BoardChanges boardChanges={boardChanges} />
                   )}
@@ -377,16 +335,6 @@ const PlayGame = ({ myProfile, gameId, setGameId }) => {
                         setBoardChanges={setBoardChanges}
                       />
                     )}
-                  {state.gameOver && (
-                    <>
-                      <Typography variant="h1" align="center">
-                        {state.txtResult}
-                      </Typography>
-                      <Typography align="center">
-                        {state.txtGameStatus}
-                      </Typography>
-                    </>
-                  )}
                 </Box>
                 <Box>
                   <Grid container spacing={1} justify="space-between">
