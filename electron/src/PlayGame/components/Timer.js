@@ -24,6 +24,9 @@ const Timer = ({ ticking, startTime, millisecs }) => {
     if (ticking) {
       ms -= Date.now() - startTime;
     }
+    if (ms < 0) {
+        ms = 0;
+    }
     return ms;
   };
 
