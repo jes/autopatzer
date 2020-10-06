@@ -12,7 +12,7 @@
     "can-ndjson-stream": "^1.0.2",
     "chess.js": "^0.10.3",
     "craco": "0.0.3",
-    "electron": "^8.2.3",
+    "electron": "^8.5.1",
     "moment": "^2.24.0",
     "react": "^16.13.1",
     "react-countdown": "^2.2.1",
