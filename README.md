@@ -21,8 +21,6 @@ I thoroughly encourage you to build an Autopatzer board. You'll need:
  - general DIY skills
  - and it would probably help to have prior experience with Arduino and Raspberry Pi
 
-I currently have 4 spare PCBs so if you want one please just get in touch and tell me where to post it.
-
 There aren't currently a decent set of instructions, so if you want to build one let's try and write some
 instructions as you go so that it might be easier for whoever comes next!
 
